@@ -7,6 +7,9 @@ import pickle
 image_list_file = './data/FACD_metadata/image_list.pkl'
 label_file = './data/FACD_metadata/label.pkl'
 
+test_num = 100
+val_num = 200
+
 class batchGenerator:
     def __init__(self, input_size = (28, 28, 1), batch_size = 32, random = False):
         with open(image_list_file, 'rb') as f:
@@ -14,14 +17,16 @@ class batchGenerator:
         with open(label_file, 'rb') as f:
             self.label = pickle.load(f)
         
-        self.image_list_test = self.image_list[:100]
-        self.label_list_test = self.label[:100]
 
-        self.image_list_val = self.image_list[100:200]
-        self.label_list_val = self.label[100:200]
 
-        self.image_list = self.image_list[200:]
-        self.label = self.label[200:]
+        self.image_list_test = self.image_list[:test_num]
+        self.label_list_test = self.label[:test_num]
+
+        self.image_list_val = self.image_list[test_num : test_num + val_num]
+        self.label_list_val = self.label[test_num : test_num + val_num]
+
+        self.image_list = self.image_list[test_num + val_num:]
+        self.label = self.label[test_num + val_num:]
 
         # self.dataList = glob.glob(data_path) # dataset list
         self.input_height = input_size[0] # model input size

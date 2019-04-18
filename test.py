@@ -3,9 +3,10 @@ import glob
 import numpy as np
 from utils.Model import CreatModel
 from utils.DataManager import batchGenerator
+import time
 
 BATCH_SIZE = 32
-input_shape = (128, 128, 3)
+input_shape = (256, 256, 3)
 
 def getTestData(image_list, label_list):
     test_images = []
@@ -46,8 +47,9 @@ def test():
     model.load_weights(save_model_path)
 
     # Predict
+    s = time.time()
     softmax_output = model.predict(test_images)
-
+    print('time spend ' + str(time.time() - s) + ' s')
     # Decode
     pred_labels = np.argmax(softmax_output, axis = 1) # Decode softmax output
     print(pred_labels)
@@ -56,8 +58,6 @@ def test():
     # Compute the test data accuracy
     accuracy = np.count_nonzero((pred_labels == test_labels))
     print('Your test accuracy is %.6f' % (accuracy / len(test_labels) * 100))
-
-
 
     pass
 

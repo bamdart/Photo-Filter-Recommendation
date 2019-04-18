@@ -11,7 +11,7 @@ filter_dir = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe
 # Load ImageData
 print('Load Image...')
 image_index = []
-for i in os.listdir(image_dir + '1977/'):
+for i in os.listdir(image_dir + 'Origin/'):
     image_index.append(i[:-4])
 
 image_list = []
@@ -27,11 +27,11 @@ image_score = []
 pairwise_comparison = []
 
 # {'filterName': 'Nashville', 'imgId': '28202', 'class': '0', 'score': -3}
-with open(metadata_dir + 'image_score.pkl', 'rb') as f:
+with open(metadata_dir + 'image_score_unix.pkl', 'rb') as f:
     image_score = pickle.load(f)
 
 # {'category': 6, 'f1': '1977', 'f2': 'Hudson', 'workerId': 'A23DZO4PNK67M5', 'passDup': False, 'imgId': '242192', 'ans': 'right'}
-with open(metadata_dir + 'pairwise_comparison.pkl', 'rb') as f:
+with open(metadata_dir + 'pairwise_comparison_unix.pkl', 'rb') as f:
     pairwise_comparison = pickle.load(f)
 
 print('build scores')

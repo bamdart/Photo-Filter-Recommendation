@@ -19,6 +19,7 @@ def train():
     model.summary()
     model.compile(loss= 'categorical_crossentropy', optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
     
+    # model.load_weights('model.h5')
 
     # Callbacks list
     save_model_path = 'model.h5'

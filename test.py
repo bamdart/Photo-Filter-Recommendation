@@ -7,6 +7,7 @@ import time
 
 BATCH_SIZE = 32
 input_shape = (256, 256, 3)
+filter_dir = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe', 'Hudson', 'Inkwell', 'Lofi', 'LordKevin', 'Mayfair', 'Nashville', 'Origin', 'Poprocket', 'Rise', 'Sierra', 'Sutro', 'Toaster', 'Valencia', 'Walden', 'Willow', 'XProII']
 
 def getTestData(image_list, label_list):
     test_images = []
@@ -39,7 +40,7 @@ def test():
 
     # Prepare the data
     test_images, test_labels = train_gen.GetTestData()
-    test_images, test_labels = getTestData(test_images, test_labels)
+    pred_images, test_labels = getTestData(test_images, test_labels)
 
     # Create the model
     model = CreatModel(input_shape = input_shape, output_shape = 23)
@@ -48,7 +49,7 @@ def test():
 
     # Predict
     s = time.time()
-    softmax_output = model.predict(test_images)
+    softmax_output = model.predict(pred_images)
     print('time spend ' + str(time.time() - s) + ' s')
     # Decode
     pred_labels = np.argmax(softmax_output, axis = 1) # Decode softmax output
@@ -58,7 +59,17 @@ def test():
     # Compute the test data accuracy
     accuracy = np.count_nonzero((pred_labels == test_labels))
     print('Your test accuracy is %.6f' % (accuracy / len(test_labels) * 100))
-
+    for i in range(len(pred_labels)):
+        print(pred_labels[i], test_labels[i]) 
+        originImg = cv2.imread(test_images[i][13])
+        predImg = cv2.imread(test_images[i][pred_labels[i]])
+        ansImg = cv2.imread(test_images[i][int(test_labels[i])])
+        print(test_images[i][pred_labels[i]])
+        cv2.imshow('origin', originImg)
+        cv2.imshow('recommand', predImg)
+        cv2.imshow('ans', ansImg)
+        cv2.waitKey(0)
+        
     pass
 
 if __name__ == "__main__":

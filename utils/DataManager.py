@@ -7,8 +7,8 @@ import pickle
 image_list_file = './data/FACD_metadata/image_list.pkl'
 label_file = './data/FACD_metadata/label.pkl'
 
-test_num = 100
-val_num = 100
+test_num = 50
+val_num = 250
 
 class batchGenerator:
     def __init__(self, input_size = (28, 28, 1), batch_size = 32, random = False):

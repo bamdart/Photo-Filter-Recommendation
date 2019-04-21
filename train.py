@@ -23,7 +23,7 @@ def train():
     # Callbacks list
     save_model_path = 'model.h5'
     checkpoint = ModelCheckpoint(filepath = save_model_path, monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience = 3, verbose=1)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience = 5, verbose=1)
     early_stopping = EarlyStopping(monitor='val_loss', patience = 10, verbose=1)
 
     # Start training

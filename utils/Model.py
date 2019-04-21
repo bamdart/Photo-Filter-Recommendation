@@ -14,34 +14,29 @@ def CreatModel(input_shape = (28, 28, 1), output_shape = 10):
     x = MaxPool2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
 
     x = SeparableConv2D(filters = f * 2, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = SeparableConv2D(filters = f * 2, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.1)(x)
     x = MaxPool2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
 
-    x = SeparableConv2D(filters = f * 4, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = SeparableConv2D(filters = f * 4, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.1)(x)
     x = MaxPool2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
 
     x = SeparableConv2D(filters = f * 8, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = SeparableConv2D(filters = f * 8, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.1)(x)
     x = MaxPool2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
 
     x = SeparableConv2D(filters = f * 16, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = SeparableConv2D(filters = f * 16, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.1)(x)
     x = MaxPool2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
 
-    x = SeparableConv2D(filters = f * 16, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = SeparableConv2D(filters = f * 16, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.1)(x)
-    x = MaxPool2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
+    # x = SeparableConv2D(filters = f * 16, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    # x = BatchNormalization()(x)
+    # x = LeakyReLU(alpha=0.1)(x)
+    # x = MaxPool2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
 
     x = GlobalAveragePooling2D()(x)
     # x = Flatten()(x)

@@ -19,8 +19,6 @@ def train():
     model.summary()
     model.compile(loss= 'categorical_crossentropy', optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
     
-    # model.load_weights('model.h5')
-
     # Callbacks list
     save_model_path = 'model.h5'
     checkpoint = ModelCheckpoint(filepath = save_model_path, monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)

@@ -53,22 +53,22 @@ def test():
     print('time spend ' + str(time.time() - s) + ' s')
     # Decode
     pred_labels = np.argmax(softmax_output, axis = 1) # Decode softmax output
-    print(pred_labels)
-    print(test_labels)
+    print('pred', pred_labels)
+    print('test', test_labels)
     print((pred_labels == test_labels))
     # Compute the test data accuracy
     accuracy = np.count_nonzero((pred_labels == test_labels))
     print('Your test accuracy is %.6f' % (accuracy / len(test_labels) * 100))
-    # for i in range(len(pred_labels)):
-    #     print(pred_labels[i], test_labels[i]) 
-    #     originImg = cv2.imread(test_images[i][13])
-    #     predImg = cv2.imread(test_images[i][pred_labels[i]])
-    #     ansImg = cv2.imread(test_images[i][int(test_labels[i])])
-    #     print(test_images[i][pred_labels[i]])
-    #     cv2.imshow('origin', originImg)
-    #     cv2.imshow('recommand', predImg)
-    #     cv2.imshow('ans', ansImg)
-    #     cv2.waitKey(0)
+    for i in range(len(pred_labels)):
+        print(pred_labels[i], test_labels[i]) 
+        originImg = cv2.imread(test_images[i][13])
+        predImg = cv2.imread(test_images[i][pred_labels[i]])
+        ansImg = cv2.imread(test_images[i][int(test_labels[i])])
+        print(test_images[i][pred_labels[i]])
+        cv2.imshow('origin', originImg)
+        cv2.imshow('recommand', predImg)
+        cv2.imshow('ans', ansImg)
+        cv2.waitKey(0)
         
     pass
 

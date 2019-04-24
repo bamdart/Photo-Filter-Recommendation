@@ -4,7 +4,7 @@ from utils.DataManager import batchGenerator
 from utils.Model import CreatModel
 
 BATCH_SIZE = 32
-input_shape = (256, 256, 3)
+input_shape = (128, 128, 3)
 
 def train():
     train_gen = batchGenerator(input_size = input_shape, batch_size = BATCH_SIZE, random = True)
@@ -18,11 +18,14 @@ def train():
     model = CreatModel(input_shape = input_shape, output_shape = 23)
     model.summary()
     model.compile(loss= 'categorical_crossentropy', optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
-    
+
     # Callbacks list
     save_model_path = 'model.h5'
+
+    # model.load_weights(save_model_path)
+
     checkpoint = ModelCheckpoint(filepath = save_model_path, monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience = 5, verbose=1)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience = 5, verbose=1)
     early_stopping = EarlyStopping(monitor='val_loss', patience = 10, verbose=1)
 
     # Start training

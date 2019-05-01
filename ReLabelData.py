@@ -27,11 +27,11 @@ image_score = []
 pairwise_comparison = []
 
 # {'filterName': 'Nashville', 'imgId': '28202', 'class': '0', 'score': -3}
-with open(metadata_dir + 'image_score_unix.pkl', 'rb') as f:
+with open(metadata_dir + 'image_score.pkl', 'rb') as f:
     image_score = pickle.load(f)
 
 # {'category': 6, 'f1': '1977', 'f2': 'Hudson', 'workerId': 'A23DZO4PNK67M5', 'passDup': False, 'imgId': '242192', 'ans': 'right'}
-with open(metadata_dir + 'pairwise_comparison_unix.pkl', 'rb') as f:
+with open(metadata_dir + 'pairwise_comparison.pkl', 'rb') as f:
     pairwise_comparison = pickle.load(f)
 
 print('build scores')
@@ -77,19 +77,20 @@ label = np.abs(label)
 
 # print(label[-5:])
 
-for i in image_score:
-    index = image_index.index(i['imgId'])
-    filter_index = filter_dir.index(i['filterName'])
-    if(i['class'] != '0'):
-        label[index, filter_index] += i['score']
+# for i in image_score:
+#     index = image_index.index(i['imgId'])
+#     filter_index = filter_dir.index(i['filterName'])
+#     if(i['class'] != '0'):
+#         label[index, filter_index] += i['score']
 
-# print(label[-5:])
+print(label[-5:])
 
+label /= 22
 # label = label / np.linalg.norm(label)
 # label = preprocessing.normalize(label, norm='l2')
-label = np.argmax(label, axis = 1)
-
-print(label[-10:])
+# label = np.argmax(label, axis = 1)
+print(np.argmax(label, axis = 1))
+print(label[-5:])
 
 with open(metadata_dir + 'image_list.pkl', 'wb') as f:
     pickle.dump(image_list, f)

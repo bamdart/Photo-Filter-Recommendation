@@ -130,7 +130,7 @@ class batchGenerator:
         # image = image.reshape((self.input_height, self.input_weight, 3))
 
         # # one hot encoder (keras function)
-        label = to_categorical(label, num_classes = 23)
+        # label = to_categorical(label, num_classes = 23)
         return image, label
 
     def data_augmentation(self, image, label):

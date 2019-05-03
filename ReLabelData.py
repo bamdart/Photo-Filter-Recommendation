@@ -83,13 +83,14 @@ label = np.abs(label)
 #     if(i['class'] != '0'):
 #         label[index, filter_index] += i['score']
 
+
 print(label[-5:])
 
-label /= 22
+label /= np.max(label)
 # label = label / np.linalg.norm(label)
 # label = preprocessing.normalize(label, norm='l2')
 # label = np.argmax(label, axis = 1)
-print(np.argmax(label, axis = 1))
+# print(np.argmax(label, axis = 1))
 print(label[-5:])
 
 with open(metadata_dir + 'image_list.pkl', 'wb') as f:

@@ -6,7 +6,7 @@ from utils.DataManager import batchGenerator
 import time
 
 BATCH_SIZE = 32
-input_shape = (256, 256, 3)
+input_shape = (128, 128, 3)
 filter_dir = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe', 'Hudson', 'Inkwell', 'Lofi', 'LordKevin', 'Mayfair', 'Nashville', 'Origin', 'Poprocket', 'Rise', 'Sierra', 'Sutro', 'Toaster', 'Valencia', 'Walden', 'Willow', 'XProII']
 
 def getTestData(image_list, label_list):
@@ -14,26 +14,29 @@ def getTestData(image_list, label_list):
     test_labels = []
     for i in range(len(image_list)):
         # Read image data
-        image = cv2.imread(image_list[i][13])
-        
-        # Preprocessing image data
-        image = cv2.resize(image, (input_shape[1],input_shape[0]))
-        # image = np.expand_dims(image, axis = -1)
-        image = np.array(image, dtype = np.float32) / 255.0
-        
-        # Read label data
-        # label_path = image_path.replace('image', 'label').replace('jpg', 'txt')
-        # with open(label_path) as f:
-        #     label = f.readlines()[0]
-        #     label = int(label)
-
-        test_images.append(image)
+        images = []
+        for j in image_list[i]:
+            image = cv2.imread(image_list[i][13])
+            
+            # Preprocessing image data
+            image = cv2.resize(image, (input_shape[1],input_shape[0]))
+            # image = np.expand_dims(image, axis = -1)
+            image = np.array(image, dtype = np.float32) / 255.0
+            
+            # Read label data
+            # label_path = image_path.replace('image', 'label').replace('jpg', 'txt')
+            # with open(label_path) as f:
+            #     label = f.readlines()[0]
+            #     label = int(label)
+            images.append(image)
+        test_images.append(images)
         test_labels.append(label_list[i])
 
     # convert data type to float32
     test_images = np.array(test_images, dtype = np.float32)
+    test_images = np.moveaxis(test_images, 0, 1)
     test_labels = np.array(test_labels, dtype = np.float32)
-    return test_images, test_labels
+    return list(test_images), test_labels
 
 def test():
     train_gen = batchGenerator(input_size = input_shape, batch_size = BATCH_SIZE, random = True)

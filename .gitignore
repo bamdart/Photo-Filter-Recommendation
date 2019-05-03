@@ -104,5 +104,6 @@ venv.bak/
 .mypy_cache/
 
 
-backup/
+backup/ 
 FACD_image/
+data/

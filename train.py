@@ -3,7 +3,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from utils.DataManager import batchGenerator
 from utils.Model import CreatModel
 
-BATCH_SIZE = 32
+BATCH_SIZE = 8
 input_shape = (128, 128, 3)
 
 def train():
@@ -26,14 +26,14 @@ def train():
 
     checkpoint = ModelCheckpoint(filepath = save_model_path, monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience = 5, verbose=1)
-    early_stopping = EarlyStopping(monitor='val_loss', patience = 10, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', patience = 20, verbose=1)
 
     # Start training
     model.fit_generator(train_gen.train_flow(),
                         steps_per_epoch = max(1, num_train // BATCH_SIZE), 
                         validation_data = train_gen.val_flow(), 
                         validation_steps = max(1, num_val // BATCH_SIZE),
-                        epochs = 200, verbose=1,
+                        epochs = 1000, verbose=1,
                         callbacks = [checkpoint, reduce_lr, early_stopping])
 
 if __name__ == "__main__":

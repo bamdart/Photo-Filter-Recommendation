@@ -2,8 +2,6 @@ import keras
 from keras.models import Model
 from keras.layers import *
 
-# channel_axis = -1
-
 # # Xception
 # def CreatModel(input_shape = (28, 28, 1), output_shape = 10):
 #     input_tensor = Input(input_shape)
@@ -53,7 +51,7 @@ from keras.layers import *
 #     x = MaxPooling2D((3, 3), strides=(2, 2),padding='same')(x)
 #     x = add([x, residual])
 
-#     for i in range(1): # origin 8 time
+#     for i in range(8): # origin 8 time
 #         residual = x
 #         prefix = 'block' + str(i + 5)
 
@@ -110,24 +108,22 @@ from keras.layers import *
 
     
 #     # Fully Connected Layer
-#     # x = Dense(units = 128)(x)
-#     # x = Dense(units = 64)(x)
 #     x = Dense(output_shape)(x)
 
 #     # Softmax activation function
 #     x = BatchNormalization()(x)
-#     output_tensor = Activation('softmax')(x)
+#     output_tensor = Activation('sigmoid')(x)
 
 #     # Create model.
 #     model = Model(input_tensor, output_tensor, name='xception')
 
 #     return model
 
-def CreatModel(input_shape = (28, 28, 1), output_shape = 10):
+def Conv(input_shape = (28, 28, 1), output_shape = 10):
     # Define model input
     input_tensor = Input(input_shape)
 
-    f = 16
+    f = 8
     x = Conv2D(filters = f, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(input_tensor)
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.3)(x)
@@ -144,7 +140,6 @@ def CreatModel(input_shape = (28, 28, 1), output_shape = 10):
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.3)(x)
     x = SeparableConv2D(filters = f * 4, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.3)(x)
     x = AveragePooling2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
@@ -169,33 +164,6 @@ def CreatModel(input_shape = (28, 28, 1), output_shape = 10):
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.3)(x)
     x = SeparableConv2D(filters = f * 16, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = AveragePooling2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
-    # x = Dropout(0.2)(x)
-
-    x = SeparableConv2D(filters = f * 32, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 32, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 32, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = AveragePooling2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
-    # x = Dropout(0.2)(x)
-
-    x = SeparableConv2D(filters = f * 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.3)(x)
     x = AveragePooling2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
@@ -205,13 +173,28 @@ def CreatModel(input_shape = (28, 28, 1), output_shape = 10):
     # x = Flatten()(x)
 
     # Fully Connected Layer
-    # x = Dense(units = 128)(x)
-    # x = Dense(units = 64)(x)
-    x = Dense(output_shape)(x)
+    # x = Dense(128)(x)
+    x = Dense(1)(x)
 
     # Softmax activation function
-    # x = BatchNormalization()(x)
-    output_tensor = Activation('relu')(x)
+    output_tensor = Activation('sigmoid')(x)
 
-    model = Model(inputs=input_tensor, outputs=output_tensor)
+    return input_tensor, output_tensor
+
+def CreatModel(input_shape = (28, 28, 1), output_shape = 10):
+    input_list = []
+    output_list = []
+
+    for _ in range(int(output_shape)):
+        input_tensor, output_tensor = Conv(input_shape = input_shape, output_shape = output_shape)
+        input_list.append(input_tensor)
+        output_list.append(output_tensor)
+
+
+    # print(input_list)
+
+    # input_tensor = Concatenate(axis = -1)(input_list)
+    output_tensor = Concatenate(axis = -1)(output_list)
+
+    model = Model(inputs = input_list, outputs = output_tensor)
     return model

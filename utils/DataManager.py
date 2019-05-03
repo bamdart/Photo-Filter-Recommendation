@@ -8,7 +8,7 @@ image_list_file = './data/FACD_metadata/image_list.pkl'
 label_file = './data/FACD_metadata/label.pkl'
 
 test_num = 50
-val_num = 100
+val_num = 200
 
 class batchGenerator:
     def __init__(self, input_size = (28, 28, 1), batch_size = 32, random = False):
@@ -33,6 +33,7 @@ class batchGenerator:
         self.random = random # perform data augmentation
 
         self.iter_index = np.arange(len(self.label)) # dataset index list
+        self.val_iter_index = np.arange(len(self.label_list_val)) # dataset index list
 
     def train_set_len(self):
         '''
@@ -59,18 +60,15 @@ class batchGenerator:
                 
                 index = self.iter_index[i] # choose a data
                 # Read data
-                image = self.GetImage(image_path = self.image_list[index][13])
+                image = self.GetImages(images_path = self.image_list[index])
                 label = self.label[index]
 
-                # image = self.GetImage(image_path = self.dataList[index])
-                # label = self.GetLabel(image_path = self.dataList[index])
                 # Perform data augmentation 
-
                 if(self.random):
                     image, label =  self.data_augmentation(image, label)
 
                 # Preprocessing data
-                image, label =  self.data_preprocessing(image, label)
+                image, label =  self.datas_preprocessing(image, label)
 
                 batch_images.append(image)
                 batch_labels.append(label)
@@ -78,14 +76,16 @@ class batchGenerator:
             
             # convert data type to float32
             batch_images = np.array(batch_images, dtype = np.float32)
+            batch_images = np.moveaxis(batch_images, 0, 1)
+            # print(batch_images.shape)
             batch_labels = np.array(batch_labels, dtype = np.float32)
-            yield batch_images, batch_labels
+            yield list(batch_images), batch_labels
     
     def val_flow(self):
         '''
         Get a batch of data
         '''
-        n = len(self.label)
+        n = len(self.label_list_val)
         i = 0
         while(True):
             batch_images = []
@@ -93,27 +93,52 @@ class batchGenerator:
             # Generate a batch of data
             for b in range(self.batch_size):
                 if(i == 0): # Shuffle the dataset
-                    np.random.shuffle(self.iter_index)
+                    np.random.shuffle(self.val_iter_index)
                 
-                index = self.iter_index[i] # choose a data
+                index = self.val_iter_index[i] # choose a data
                 # Read data
-                image = self.GetImage(image_path = self.image_list[index][13])
-                label = self.label[index]
+                image = self.GetImages(images_path = self.image_list_val[index])
+                label = self.label_list_val[index]
 
                 if(self.random):
                     image, label =  self.data_augmentation(image, label)
 
                 # Preprocessing data
-                image, label =  self.data_preprocessing(image, label)
-
+                image, label =  self.datas_preprocessing(image, label)
+                
                 batch_images.append(image)
                 batch_labels.append(label)
                 i = (i + 1) % n
             
             # convert data type to float32
             batch_images = np.array(batch_images, dtype = np.float32)
+            batch_images = np.moveaxis(batch_images, 0, 1)
+            # print(batch_images.shape)
             batch_labels = np.array(batch_labels, dtype = np.float32)
-            yield batch_images, batch_labels
+            yield list(batch_images), batch_labels
+
+    def datas_preprocessing(self, images, label):
+        '''
+        Resize and normalize the image data.
+        And one hot encode the labels.
+        '''
+        for i in range(len(images)):
+            image = images[i]
+
+            # resize image to fit model input
+            image = cv2.resize(image, (self.input_weight, self.input_height))
+            # (height , weight)  --> (height , weight, 1) 
+            # image = np.expand_dims(image, axis = -1)
+            # normalize image data
+            image = np.array(image, dtype = np.float32) / 255.0 
+
+            # image = image.reshape((self.input_height, self.input_weight, 3))
+
+            images[i] = image
+
+        # # one hot encoder (keras function)
+        # label = to_categorical(label, num_classes = 23)
+        return images, label
 
     def data_preprocessing(self, image, label):
         '''
@@ -138,6 +163,17 @@ class batchGenerator:
         Perform data augmentation.
         '''
         return image, label
+
+    def GetImages(self, images_path):
+        '''
+        Read the image from the path.
+        '''
+        images = []
+
+        for path in images_path:
+            images.append(cv2.imread(path))
+
+        return images
 
     def GetImage(self, image_path):
         '''

@@ -36,6 +36,7 @@ with open(metadata_dir + 'pairwise_comparison.pkl', 'rb') as f:
 
 print('build scores')
 label = np.zeros((len(image_list), len(filter_dir)))
+category = np.zeros((len(image_list)), dtype = np.int8)
 
 for i in range(len(label)):
     for j in range(len(filter_dir)):
@@ -45,6 +46,8 @@ for i in pairwise_comparison:
     index = image_index.index(i['imgId'])
     right_filter_index = filter_dir.index(i['f2'])
     left_filter_index = filter_dir.index(i['f1'])
+
+    category[index] = i['category']
 
     if(i['ans'] == 'right'):
         # 右邊目前排名比較後面
@@ -77,11 +80,11 @@ label = np.abs(label)
 
 # print(label[-5:])
 
-# for i in image_score:
-#     index = image_index.index(i['imgId'])
-#     filter_index = filter_dir.index(i['filterName'])
-#     if(i['class'] != '0'):
-#         label[index, filter_index] += i['score']
+for i in image_score:
+    index = image_index.index(i['imgId'])
+    filter_index = filter_dir.index(i['filterName'])
+    if(i['class'] != '0'):
+        label[index, filter_index] += i['score']
 
 
 print(label[-5:])
@@ -98,3 +101,8 @@ with open(metadata_dir + 'image_list.pkl', 'wb') as f:
 
 with open(metadata_dir + 'label.pkl', 'wb') as f:
     pickle.dump(label, f)
+
+with open(metadata_dir + 'category.pkl', 'wb') as f:
+    pickle.dump(category, f)
+
+print(np.bincount(category).size)

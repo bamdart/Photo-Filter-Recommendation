@@ -105,5 +105,4 @@ venv.bak/
 
 
 backup/ 
-FACD_image/
-data/
+data/FACD_image/

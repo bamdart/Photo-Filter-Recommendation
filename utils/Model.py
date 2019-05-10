@@ -17,13 +17,14 @@ def build_filter_model(input_shape):
     x = LeakyReLU(alpha=0.1)(x)
     x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
 
-    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.1)(x)
-    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.1)(x)
+    x = block(x, filters = 64)
     x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = block(x, filters = 128)
+    x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = block(x, filters = 256)
+
 
     x = Conv2D(filters = output_filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
@@ -46,13 +47,13 @@ def build_classify_model(input_shape, ouput_feature = False):
     x = LeakyReLU(alpha=0.1)(x)
     x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
 
-    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.1)(x)
-    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.1)(x)
+    x = block(x, filters = 64)
     x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = block(x, filters = 128)
+    x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = block(x, filters = 256)
 
     x = Conv2D(filters = output_filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
@@ -61,7 +62,8 @@ def build_classify_model(input_shape, ouput_feature = False):
 
     # classify
     x = Dense(8)(feature)
-    x = Softmax()(x)
+    #x = BatchNormalization()(x)
+    x = Activation('softmax')(x)
 
     if(ouput_feature):
         classify_model = Model(inputs = input_tensor, outputs = feature)
@@ -71,7 +73,10 @@ def build_classify_model(input_shape, ouput_feature = False):
 
 def build_score_model(input_shape):
     input_tensor = Input(input_shape)
-    x = Dense(32)(input_tensor)
+    x = Dense(64)(input_tensor)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Dense(32)(x)
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.1)(x)
     x = Dense(1)(x)
@@ -143,6 +148,38 @@ def Creat_test_Model(input_shape):
 
     model = Model(inputs = [filter_input, origin_input], outputs = filter_score)
     return classify_model, filter_model, score_model, model
+
+
+
+
+def block(x, filters):
+    filters = filters // 4
+
+    x1 = Conv2D(filters = filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x1 = BatchNormalization()(x1)
+    x1 = LeakyReLU(alpha=0.1)(x1)
+
+    x2 = Conv2D(filters = filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x1)
+    x2 = BatchNormalization()(x2)
+    x2 = LeakyReLU(alpha=0.1)(x2)
+
+    x3 = Concatenate(axis = -1)([x1,x2])
+    x3 = Conv2D(filters = filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x3)
+    x3 = BatchNormalization()(x3)
+    x3 = LeakyReLU(alpha=0.1)(x3)
+
+    x4 = Concatenate(axis = -1)([x1,x2, x3])
+    x4 = Conv2D(filters = filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x4)
+    x4 = BatchNormalization()(x4)
+    x4 = LeakyReLU(alpha=0.1)(x4)
+
+    x5 = Concatenate(axis = -1)([x1,x2, x3, x4])
+
+    return x5
+
+
+
+
 
 '''
 def loss_function(args):

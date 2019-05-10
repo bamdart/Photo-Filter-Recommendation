@@ -4,6 +4,7 @@ import glob
 import shutil
 import numpy as np
 import keras.backend as K
+import tensorflow as tf
 from utils.Model import Creat_train_Model, Creat_test_Model
 from utils.DataManager import batchGenerator
 import time
@@ -37,7 +38,7 @@ def getTestData(image_list, label_list):
                 origin_images.append(image)
             else:
                 images.append(image)
-                labels.append(label_list[i][j])
+                labels.append(-label_list[i][j])
         label = np.argsort(labels)
 
         filter_images.append(images)
@@ -93,11 +94,46 @@ def test():
         model.load_weights(final_model_path)
 
     # Predict
+    origin_images = np.expand_dims(origin_images, axis = 1)
+    origin_images = np.repeat(origin_images, 22, axis = 1)
+
     filter_images = np.reshape(filter_images, (-1,input_shape[0],input_shape[1],input_shape[2]))
+    origin_images = np.reshape(origin_images, (-1,input_shape[0],input_shape[1],input_shape[2]))
+
     s = time.time()
     score = model.predict([filter_images, origin_images])
     print('time spend ' + str(time.time() - s) + ' s')
     # Decode
+    score = np.reshape(score, (-1, 22))
+    ranking = np.argsort(-score)
+
+
+    top1 = 0.0
+    top5_1 = 0.0    
+    top5_2 = 0.0  
+    top5_3 = 0.0  
+    for i, l in enumerate(test_labels):
+        rank = ranking[i]
+        top_rank = rank[:5]
+        if top_rank[0] == l[0]:
+            top1 += 1.0
+        if np.isin(top_rank[:1], l[:5]).all():
+            top5_1 += 1.0
+        if np.isin(top_rank[:2], l[:5]).all():
+            top5_2 += 1.0
+        if np.isin(top_rank[:3], l[:5]).all():
+            top5_3 += 1.0
+
+    num_test = float(len(test_labels))
+    print('top1 accuracy is %.6f' % (top1 / num_test))
+    print('top1 in 5 accuracy is %.6f' % (top5_1 / num_test))
+    print('top2 in 5 accuracy is %.6f' % (top5_2 / num_test))
+    print('top3 in 5 accuracy is %.6f' % (top5_3 / num_test))
+
+    accuracy = (ranking == test_labels).mean()
+    print('Your test accuracy is %.6f' % accuracy)
+    pass
+    '''
     pred_labels = np.argmax(sigmoid_output, axis = 1) # Decode softmax output
     test_labels = np.argmax(test_labels, axis = 1)
     print('pred', pred_labels)
@@ -116,7 +152,7 @@ def test():
     #     cv2.imshow('recommand', predImg)
     #     cv2.imshow('ans', ansImg)
     #     cv2.waitKey(0)
-        
+    '''
     pass
 
 if __name__ == "__main__":

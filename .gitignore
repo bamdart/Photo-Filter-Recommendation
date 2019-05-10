@@ -107,3 +107,4 @@ venv.bak/
 backup/ 
 FACD_image/
 data/
+export/

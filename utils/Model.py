@@ -1,200 +1,162 @@
 import keras
+import tensorflow as tf
 from keras.models import Model
 from keras.layers import *
 
-# # Xception
-# def CreatModel(input_shape = (28, 28, 1), output_shape = 10):
-#     input_tensor = Input(input_shape)
+output_filters = 128
 
-#     x = Conv2D(32, (3, 3), strides=(2, 2), use_bias=False)(input_tensor)
-#     x = BatchNormalization()(x)
-#     x = LeakyReLU(alpha=0.3)(x)
-#     x = Conv2D(64, (3, 3), use_bias=False)(x)
-#     x = BatchNormalization()(x)
-#     x = LeakyReLU(alpha=0.3)(x)
-
-#     residual = Conv2D(128, (1, 1), strides=(2, 2), padding='same', use_bias=False)(x)
-#     residual = BatchNormalization()(residual)
-
-#     x = SeparableConv2D(128, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-#     x = LeakyReLU(alpha=0.3)(x)
-#     x = SeparableConv2D(128, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-
-#     x = MaxPooling2D((3, 3),strides=(2, 2),padding='same',name='block2_pool')(x)
-#     x = add([x, residual])
-
-#     residual = Conv2D(256, (1, 1), strides=(2, 2), padding='same', use_bias=False)(x)
-#     residual = BatchNormalization()(residual)
-
-#     x = LeakyReLU(alpha=0.3)(x)
-#     x = SeparableConv2D(256, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-#     x = LeakyReLU(alpha=0.3)(x)
-#     x = SeparableConv2D(256, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-
-#     x = MaxPooling2D((3, 3), strides=(2, 2),padding='same')(x)
-#     x = add([x, residual])
-
-#     residual = Conv2D(728, (1, 1), strides=(2, 2), padding='same', use_bias=False)(x)
-#     residual = BatchNormalization()(residual)
-
-#     x = LeakyReLU(alpha=0.3)(x)
-#     x = SeparableConv2D(728, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-#     x = LeakyReLU(alpha=0.3)(x)
-#     x = SeparableConv2D(728, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-
-#     x = MaxPooling2D((3, 3), strides=(2, 2),padding='same')(x)
-#     x = add([x, residual])
-
-#     for i in range(8): # origin 8 time
-#         residual = x
-#         prefix = 'block' + str(i + 5)
-
-#         x = LeakyReLU(alpha=0.3)(x)
-#         x = SeparableConv2D(728, (3, 3),padding='same',use_bias=False)(x)
-#         x = BatchNormalization()(x)
-#         x = LeakyReLU(alpha=0.3)(x)
-#         x = SeparableConv2D(728, (3, 3),padding='same',use_bias=False)(x)
-#         x = BatchNormalization()(x)
-#         x = LeakyReLU(alpha=0.3)(x)
-#         x = SeparableConv2D(728, (3, 3),padding='same',use_bias=False)(x)
-#         x = BatchNormalization()(x)
-
-#         x = add([x, residual])
-
-#     residual = Conv2D(1024, (1, 1), strides=(2, 2), padding='same', use_bias=False)(x)
-#     residual = BatchNormalization()(residual)
-
-#     x = LeakyReLU(alpha=0.3)(x)
-#     x = SeparableConv2D(728, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-#     x = LeakyReLU(alpha=0.3)(x)
-#     x = SeparableConv2D(1024, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-
-#     x = MaxPooling2D((3, 3),strides=(2, 2),padding='same')(x)
-#     x = add([x, residual])
-
-#     x = SeparableConv2D(1536, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-#     x = LeakyReLU(alpha=0.3)(x)
-
-#     x = SeparableConv2D(2048, (3, 3), padding='same', use_bias=False)(x)
-#     x = BatchNormalization()(x)
-#     x = LeakyReLU(alpha=0.3)(x)
-
-#     x = GlobalAveragePooling2D()(x)
-
-#     # if include_top:
-#     #     x = GlobalAveragePooling2D(name='avg_pool')(x)
-#     #     x = Dense(classes, activation='softmax', name='predictions')(x)
-#     # else:
-#     #     if pooling == 'avg':
-#     #  x = GlobalAveragePooling2D()(x)
-#     #     elif pooling == 'max':
-#     #  x = GlobalMaxPooling2D()(x)
-
-#     # Ensure that the model takes into account
-#     # any potential predecessors of `input_tensor`.
-#     # if input_tensor is not None:
-#     #     inputs = keras_utils.get_source_inputs(input_tensor)
-#     # else:
-#     #     inputs = img_input
-
-    
-#     # Fully Connected Layer
-#     x = Dense(output_shape)(x)
-
-#     # Softmax activation function
-#     x = BatchNormalization()(x)
-#     output_tensor = Activation('sigmoid')(x)
-
-#     # Create model.
-#     model = Model(input_tensor, output_tensor, name='xception')
-
-#     return model
-
-def Conv(input_shape = (28, 28, 1), output_shape = 10):
+def build_filter_model(input_shape):
     # Define model input
     input_tensor = Input(input_shape)
 
-    f = 8
-    x = Conv2D(filters = f, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(input_tensor)
+    x = Conv2D(filters = 16, kernel_size = (3, 3), strides = (2, 2), padding = 'same')(input_tensor)
     x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 32, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
 
-    x = SeparableConv2D(filters = f * 2, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 2, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = AveragePooling2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
 
-    x = SeparableConv2D(filters = f * 4, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = Conv2D(filters = output_filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 4, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = AveragePooling2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
-    # x = Dropout(0.2)(x)
-
-    x = SeparableConv2D(filters = f * 8, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 8, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 8, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = AveragePooling2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
-    # x = Dropout(0.2)(x)
-
-    x = SeparableConv2D(filters = f * 16, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 16, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = SeparableConv2D(filters = f * 16, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x = BatchNormalization()(x)
-    x = LeakyReLU(alpha=0.3)(x)
-    x = AveragePooling2D(pool_size = (2, 2), strides = (2, 2), padding = 'same')(x)
-    # x = Dropout(0.2)(x)
+    x = LeakyReLU(alpha=0.1)(x)
 
     x = GlobalAveragePooling2D()(x)
-    # x = Flatten()(x)
 
-    # Fully Connected Layer
-    # x = Dense(128)(x)
+    filter_model = Model(inputs = input_tensor, outputs = x)
+    return filter_model
+
+def build_classify_model(input_shape, ouput_feature = False):
+    # Define model input
+    input_tensor = Input(input_shape)
+
+    x = Conv2D(filters = 16, kernel_size = (3, 3), strides = (2, 2), padding = 'same')(input_tensor)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 32, kernel_size = (5, 5), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = AveragePooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = Conv2D(filters = output_filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    feature = GlobalAveragePooling2D()(x)
+
+    # classify
+    x = Dense(8)(feature)
+    x = Softmax()(x)
+
+    if(ouput_feature):
+        classify_model = Model(inputs = input_tensor, outputs = feature)
+    else:
+        classify_model = Model(inputs = input_tensor, outputs = x)
+    return classify_model
+
+def build_score_model(input_shape):
+    input_tensor = Input(input_shape)
+    x = Dense(32)(input_tensor)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
     x = Dense(1)(x)
+    x = BatchNormalization()(x)
+    score = LeakyReLU(alpha=0.1)(x)
 
-    # Softmax activation function
-    output_tensor = Activation('sigmoid')(x)
+    score_model = Model(inputs = input_tensor, outputs = score)
+    return score_model
 
-    return input_tensor, output_tensor
+def Creat_train_Model(input_shape, classify_model_path):
+    # build the model
+    classify_model = build_classify_model(input_shape, ouput_feature = True)
+    classify_model.load_weights(classify_model_path, by_name = True) # do not train the classify model
+    for layer in classify_model.layers:
+        layer.trainable = False
 
-def CreatModel(input_shape = (28, 28, 1), output_shape = 10):
-    input_list = []
-    output_list = []
+    filter_model = build_filter_model(input_shape)
+    score_model = build_score_model((output_filters * 2,))
 
-    for _ in range(int(output_shape)):
-        input_tensor, output_tensor = Conv(input_shape = input_shape, output_shape = output_shape)
-        input_list.append(input_tensor)
-        output_list.append(output_tensor)
+    # define input
+    filter1_input = Input(input_shape)
+    filter2_input = Input(input_shape)
+    origin_input = Input(input_shape)
+
+    # get image feature
+    filter1_feature = filter_model(filter1_input)
+    filter2_feature = filter_model(filter2_input)
+    classify_feature = classify_model(origin_input)
+
+    # concat filter feature and classify feature
+    filter1_feature = Concatenate(axis = -1)([filter1_feature, classify_feature])
+    filter2_feature = Concatenate(axis = -1)([filter2_feature, classify_feature])
+
+    # classify
+    filter1_score = score_model(filter1_feature)
+    filter2_score = score_model(filter2_feature)
+
+    # merge score
+    merge_score = Concatenate(axis = -1)([filter1_score, filter2_score])
+    prob = Activation('softmax')(merge_score)
+    # only output pos > neg prob
+    pos_prob = Lambda(lambda x: x[:,0])(prob)
+    pos_prob = Reshape((1,))(pos_prob)
+
+    model = Model(inputs = [filter1_input, filter2_input, origin_input], outputs = pos_prob)
+    return classify_model, filter_model, score_model, model
 
 
-    # print(input_list)
+def Creat_test_Model(input_shape):
+    # build the model
+    classify_model = build_classify_model(input_shape, ouput_feature = True)
+    filter_model = build_filter_model(input_shape)
+    score_model = build_score_model((output_filters * 2,))
 
-    # input_tensor = Concatenate(axis = -1)(input_list)
-    output_tensor = Concatenate(axis = -1)(output_list)
+    # define input
+    filter_input = Input(input_shape)
+    origin_input = Input(input_shape)
+    
 
-    model = Model(inputs = input_list, outputs = output_tensor)
-    return model
+    # get image feature
+    filter_feature = filter_model(filter_input)
+    classify_feature = classify_model(origin_input)
+
+    # concat filter feature and classify feature
+    filter_feature = Concatenate(axis = -1)([filter_feature, classify_feature])
+
+    # classify
+    filter_score = score_model(filter_feature)
+
+    model = Model(inputs = [filter_input, origin_input], outputs = filter_score)
+    return classify_model, filter_model, score_model, model
+
+'''
+def loss_function(args):
+    Fused_feature1 = args[0]
+    Fused_feature2 = args[1]
+    category_feature = args[2]
+    category_label = args[3]
+
+    feature_responses1 = tf.math.square(tf.norm(Fused_feature1, axis = -1, ord='euclidean'))
+    feature_responses2 = tf.math.square(tf.norm(Fused_feature2, axis = -1, ord='euclidean'))
+
+    reponse_loss = -tf.reduce_sum(feature_responses1 - feature_responses2)
+    category_loss = tf.losses.softmax_cross_entropy(category_label, category_feature)
+
+    model_loss = reponse_loss + category_loss
+    return model_loss
+'''

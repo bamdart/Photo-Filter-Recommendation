@@ -11,10 +11,10 @@ import time
 
 from train import filter_model_path, classify_model_path
 
-isexportModel = 0
+isexportModel = 1
 
 BATCH_SIZE = 32
-input_shape = (128, 128, 3)
+input_shape = (256, 256, 3)
 final_model_path = 'final_model.h5'
 
 #filter_dir = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe', 'Hudson', 'Inkwell', 'Lofi', 'LordKevin', 'Mayfair', 'Nashville', 'Origin', 'Poprocket', 'Rise', 'Sierra', 'Sutro', 'Toaster', 'Valencia', 'Walden', 'Willow', 'XProII']
@@ -108,27 +108,23 @@ def test():
     ranking = np.argsort(-score)
 
 
-    top1 = 0.0
-    top5_1 = 0.0    
-    top5_2 = 0.0  
-    top5_3 = 0.0  
+    top1 = 0.0   
+    top3 = 0.0  
+    top5 = 0.0  
     for i, l in enumerate(test_labels):
         rank = ranking[i]
         top_rank = rank[:5]
         if top_rank[0] == l[0]:
             top1 += 1.0
-        if np.isin(top_rank[:1], l[:5]).all():
-            top5_1 += 1.0
-        if np.isin(top_rank[:2], l[:5]).all():
-            top5_2 += 1.0
-        if np.isin(top_rank[:3], l[:5]).all():
-            top5_3 += 1.0
+        if np.isin(l[0], top_rank[:3]).all():
+            top3 += 1.0
+        if np.isin(l[0], top_rank[:5]).all():
+            top5 += 1.0
 
     num_test = float(len(test_labels))
     print('top1 accuracy is %.6f' % (top1 / num_test))
-    print('top1 in 5 accuracy is %.6f' % (top5_1 / num_test))
-    print('top2 in 5 accuracy is %.6f' % (top5_2 / num_test))
-    print('top3 in 5 accuracy is %.6f' % (top5_3 / num_test))
+    print('top3 accuracy is %.6f' % (top3 / num_test))
+    print('top5 accuracy is %.6f' % (top5 / num_test))
 
     accuracy = (ranking == test_labels).mean()
     print('Your test accuracy is %.6f' % accuracy)

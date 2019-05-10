@@ -8,7 +8,7 @@ image_list_file = './data/FACD_metadata/image_list.pkl'
 category_file = './data/FACD_metadata/category.pkl'
 
 test_num = 50
-val_num = 200
+val_num = 100
 
 class batchGenerator:
     def __init__(self, input_size = (28, 28, 1), batch_size = 32, random = False):

@@ -3,7 +3,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from utils.Category_Model import CreatModel
 from utils.Category_DataManager import batchGenerator
 
-BATCH_SIZE = 8
+BATCH_SIZE = 32
 input_shape = (128, 128, 3)
 
 def train():
@@ -22,8 +22,8 @@ def train():
     save_model_path = 'model.h5'
 
     checkpoint = ModelCheckpoint(filepath = save_model_path, monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience = 10, verbose=1)
-    early_stopping = EarlyStopping(monitor='val_loss', patience = 20, verbose=1)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience = 10, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', patience = 30, verbose=1)
 
     # Start training
     model.fit_generator(train_gen.train_flow(),

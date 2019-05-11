@@ -4,6 +4,7 @@ import numpy as np
 from utils.Category_Model import CreatModel
 from utils.Category_DataManager import batchGenerator
 import time
+import pickle
 
 BATCH_SIZE = 16
 input_shape = (128, 128, 3)
@@ -16,7 +17,7 @@ def getTestData(image_list, label_list):
     test_labels = []
     for i in range(len(image_list)):
         # Read image data
-        image = cv2.imread(image_dir + image_list[i] + '.jpg')
+        image = cv2.imread(image_list[i][13])
         
         # Preprocessing image data
         image = cv2.resize(image, (input_shape[1],input_shape[0]))
@@ -32,10 +33,12 @@ def getTestData(image_list, label_list):
     return test_images, test_labels
 
 def test():
-    train_gen = batchGenerator(input_size = input_shape, batch_size = BATCH_SIZE, aug = True)
+    with open('./data/FACD_metadata/image_list.pkl', 'rb') as f:
+        test_images = pickle.load(f)
+    with open('./data/FACD_metadata/category.pkl', 'rb') as f:
+        test_labels = pickle.load(f)
 
     # Prepare the data
-    test_images, test_labels = train_gen.GetTestData()
     pred_images, test_labels = getTestData(test_images, test_labels)
 
     # Create the model

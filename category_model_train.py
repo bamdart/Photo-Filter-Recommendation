@@ -3,11 +3,11 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from utils.Category_Model import CreatModel
 from utils.Category_DataManager import batchGenerator
 
-BATCH_SIZE = 32
-input_shape = (128, 128, 3)
+BATCH_SIZE = 128
+input_shape = (64, 64, 3)
 
 def train():
-    train_gen = batchGenerator(input_size = input_shape, batch_size = BATCH_SIZE, random = True)
+    train_gen = batchGenerator(input_size = input_shape, batch_size = BATCH_SIZE, aug = True)
 
     num_train, num_val = train_gen.train_set_len(), train_gen.val_set_len() # Print the dataset size
     print('Training data num: %d' % num_train)

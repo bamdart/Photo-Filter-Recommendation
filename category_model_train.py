@@ -3,7 +3,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from utils.Category_Model import CreatModel
 from utils.Category_DataManager import batchGenerator
 
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 input_shape = (64, 64, 3)
 
 def train():
@@ -19,11 +19,13 @@ def train():
     model.compile(loss= 'categorical_crossentropy', optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
 
     # Callbacks list
-    save_model_path = 'model.h5'
+    save_model_path = 'category_model.h5'
 
-    checkpoint = ModelCheckpoint(filepath = save_model_path, monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience = 10, verbose=1)
-    early_stopping = EarlyStopping(monitor='val_loss', patience = 30, verbose=1)
+    model.load_weights(save_model_path)
+
+    checkpoint = ModelCheckpoint(filepath = save_model_path, monitor='val_loss', save_weights_only=False, save_best_only=True, period=1)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience = 5, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', patience = 20, verbose=1)
 
     # Start training
     model.fit_generator(train_gen.train_flow(),

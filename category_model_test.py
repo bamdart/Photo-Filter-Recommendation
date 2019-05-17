@@ -9,8 +9,6 @@ BATCH_SIZE = 16
 input_shape = (128, 128, 3)
 image_dir = './data/category_image/'
 
-filter_dir = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe', 'Hudson', 'Inkwell', 'Lofi', 'LordKevin', 'Mayfair', 'Nashville', 'Origin', 'Poprocket', 'Rise', 'Sierra', 'Sutro', 'Toaster', 'Valencia', 'Walden', 'Willow', 'XProII']
-
 def getTestData(image_list, label_list):
     test_images = []
     test_labels = []
@@ -40,7 +38,7 @@ def test():
 
     # Create the model
     model = CreatModel(input_shape = input_shape, output_shape = 23)
-    save_model_path = 'model.h5'
+    save_model_path = 'category_model.h5'
     model.load_weights(save_model_path)
 
     # Predict
@@ -57,6 +55,13 @@ def test():
     # Compute the test data accuracy
     accuracy = np.count_nonzero((pred_labels == test_labels))
     print('Your test accuracy is %.6f' % (accuracy / len(test_labels) * 100))
+
+    # for i in range(len(pred_labels)):
+    #     print('pred', pred_labels[i], 'truth', test_labels[i]) 
+    #     print(category_list[pred_labels[i]], category_list[int(test_labels[i])])
+    #     ansImg = cv2.imread(image_dir + image_list[i] + '.jpg')
+    #     cv2.imshow('ans', ansImg)
+    #     cv2.waitKey(0)
 
     pass
 

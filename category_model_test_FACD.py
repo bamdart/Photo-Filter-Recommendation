@@ -5,12 +5,14 @@ from utils.Category_Model import CreatModel
 from utils.Category_DataManager import batchGenerator
 import time
 import pickle
+from keras.models import load_model
 
 BATCH_SIZE = 16
 input_shape = (128, 128, 3)
 image_dir = './data/category_image/'
 
 filter_dir = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe', 'Hudson', 'Inkwell', 'Lofi', 'LordKevin', 'Mayfair', 'Nashville', 'Origin', 'Poprocket', 'Rise', 'Sierra', 'Sutro', 'Toaster', 'Valencia', 'Walden', 'Willow', 'XProII']
+category_list = ['animal','floral', 'landscape', 'architecture', 'fooddrink', 'portrait', 'cityscape', 'stilllife']
 
 def getTestData(image_list, label_list):
     test_images = []
@@ -42,10 +44,10 @@ def test():
     pred_images, test_labels = getTestData(test_images, test_labels)
 
     # Create the model
-    model = CreatModel(input_shape = input_shape, output_shape = 23)
-    save_model_path = 'model.h5'
-    model.load_weights(save_model_path)
-
+    # model = CreatModel(input_shape = input_shape, output_shape = 23)
+    save_model_path = 'category_model.h5'
+    # model.load_weights(save_model_path)
+    model = load_model(save_model_path)
     # Predict
     s = time.time()
     sigmoid_output = model.predict(pred_images)
@@ -60,6 +62,18 @@ def test():
     # Compute the test data accuracy
     accuracy = np.count_nonzero((pred_labels == test_labels))
     print('Your test accuracy is %.6f' % (accuracy / len(test_labels) * 100))
+
+    for i in range(len(pred_labels)):
+        print('pred', pred_labels[i], 'truth', test_labels[i]) 
+        print(category_list[pred_labels[i]], category_list[int(test_labels[i])])
+        originImg = cv2.imread(test_images[i][13])
+        # predImg = cv2.imread(test_images[i][pred_labels[i]])
+        # ansImg = cv2.imread(test_images[i][int(test_labels[i])])
+        # print(test_images[i][pred_labels[i]])
+        cv2.imshow('origin', originImg)
+        # cv2.imshow('recommand', predImg)
+        # cv2.imshow('ans', ansImg)
+        cv2.waitKey(0)
 
     pass
 

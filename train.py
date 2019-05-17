@@ -24,7 +24,7 @@ def train():
 
     # model.load_weights(save_model_path)
 
-    checkpoint = ModelCheckpoint(filepath = save_model_path, monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
+    checkpoint = ModelCheckpoint(filepath = save_model_path, monitor='val_loss', save_weights_only=False, save_best_only=True, period=1)
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience = 5, verbose=1)
     early_stopping = EarlyStopping(monitor='val_loss', patience = 20, verbose=1)
 

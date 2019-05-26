@@ -23,8 +23,9 @@ class threadsafe_iter:
     def __next__(self):
         with self.lock:
             return next(self.flow)
+
 class batchGenerator:
-    def __init__(self, data_path, input_size = (28, 28, 1), batch_size = 32, random = False, isClassify = True):
+    def __init__(self, data_path, input_size = (28, 28, 1), batch_size = 32, random = False, isClassify = True, image_preload = True):
         with open(data_path, 'rb') as f:
             self.data_list = pickle.load(f)
 
@@ -33,6 +34,10 @@ class batchGenerator:
         self.batch_size = batch_size
         self.random = random # perform data augmentation
         self.isClassify = isClassify
+
+        self.image_preload = image_preload
+        if(self.image_preload):
+            self.preload_images = self.preload_image()
 
         self.iter_index = np.arange(len(self.data_list)) # dataset index list
 
@@ -115,27 +120,65 @@ class batchGenerator:
 
     def GetData(self, data_info):
         origin_image_path = './data/FACD_image/Origin/' + data_info['imgId'] + '.jpg'
-        origin_image = cv2.imread(origin_image_path)
+        if(self.image_preload):
+            origin_image = self.preload_images[data_info['imgId']]['Origin']
+        else:
+            origin_image = cv2.imread(origin_image_path)
 
         category = data_info['category']
         if(self.isClassify):
             return origin_image, None, category
 
-
         filter_image1_path = './data/FACD_image/'+ data_info['f1'] + '/' + data_info['imgId'] + '.jpg'
         filter_image2_path = './data/FACD_image/'+ data_info['f2'] + '/' + data_info['imgId'] + '.jpg'
 
-        if(data_info['ans'] == 'right'):
-            filter_image_pos = cv2.imread(filter_image2_path)
-            filter_image_neg = cv2.imread(filter_image1_path)
+        if(self.image_preload):
+            filter_image1 = self.preload_images[data_info['imgId']][data_info['f1']]
+            filter_image2 = self.preload_images[data_info['imgId']][data_info['f2']]
         else:
-            filter_image_pos = cv2.imread(filter_image1_path)
-            filter_image_neg = cv2.imread(filter_image2_path)
+            filter_image1 = cv2.imread(filter_image1_path)
+            filter_image2 = cv2.imread(filter_image2_path)
+
+        if(data_info['ans'] == 'right'):
+            filter_image_pos = filter_image2
+            filter_image_neg = filter_image1
+        else:
+            filter_image_pos = filter_image1
+            filter_image_neg = filter_image2
 
         return origin_image, [filter_image_pos, filter_image_neg], category
 
-    def GetTestData(self):
-        return self.image_list_test, self.label_list_test
+    def preload_image(self):
+        preload_images = {}
+        count = 0
+        for i in range(len(self.data_list)):
+            data_info = self.data_list[i]
+            origin_image_path = './data/FACD_image/Origin/' + data_info['imgId'] + '.jpg'
+            filter_image1_path = './data/FACD_image/'+ data_info['f1'] + '/' + data_info['imgId'] + '.jpg'
+            filter_image2_path = './data/FACD_image/'+ data_info['f2'] + '/' + data_info['imgId'] + '.jpg'
+
+            if data_info['imgId'] not in preload_images.keys():
+                preload_images[data_info['imgId']] = {}
+        
+            if 'Origin' not in preload_images[data_info['imgId']].keys():
+                image = cv2.imread(origin_image_path)
+                image = cv2.resize(image, (self.input_weight, self.input_height))
+                preload_images[data_info['imgId']]['Origin'] = image
+    
+            if data_info['f1'] not in preload_images[data_info['imgId']].keys():
+                image = cv2.imread(filter_image1_path)
+                image = cv2.resize(image, (self.input_weight, self.input_height))
+                preload_images[data_info['imgId']][data_info['f1']] = image
+            
+            if data_info['f2'] not in preload_images[data_info['imgId']].keys():
+                image = cv2.imread(filter_image2_path)
+                image = cv2.resize(image, (self.input_weight, self.input_height))
+                preload_images[data_info['imgId']][data_info['f2']] = image
+            
+            if(count % 100 == 0):
+                print("Preload image %d / %d" % (count, len(self.data_list)))
+            count += 1
+        return preload_images
 
 
 

@@ -16,12 +16,58 @@ isexportModel = 1
 BATCH_SIZE = 32
 input_shape = (256, 256, 3)
 final_model_path = 'final_model.h5'
+test_dataset_path = 'data\\Testing.pkl'
 
-def getTestData(image_list, label_list):
+def getTestData():
+    with open(test_dataset_path, 'rb') as f:
+        data_list = pickle.load(f)
+
     origin_images = []
     filter_images = []
-    test_labels = []
-    for i in range(len(image_list)):
+    for i in range(len(data_list)):
+        data_info = data_list[i]
+        origin_image_path = './data/FACD_image/Origin/' + data_info['imgId'] + '.jpg'
+        origin_image = cv2.imread(origin_image_path)
+        origin_image = cv2.resize(origin_image, (input_shape[1],input_shape[0]))
+        origin_image = np.array(origin_image, dtype = np.float32) / 255.0
+
+        filter_image1_path = './data/FACD_image/'+ data_info['f1'] + '/' + data_info['imgId'] + '.jpg'
+        filter_image2_path = './data/FACD_image/'+ data_info['f2'] + '/' + data_info['imgId'] + '.jpg'
+
+
+    preload_images = {}
+    count = 0
+    for i in range(len(self.data_list)):
+        data_info = self.data_list[i]
+        origin_image_path = './data/FACD_image/Origin/' + data_info['imgId'] + '.jpg'
+        filter_image1_path = './data/FACD_image/'+ data_info['f1'] + '/' + data_info['imgId'] + '.jpg'
+        filter_image2_path = './data/FACD_image/'+ data_info['f2'] + '/' + data_info['imgId'] + '.jpg'
+
+        if data_info['imgId'] not in preload_images.keys():
+            preload_images[data_info['imgId']] = {}
+    
+        if 'Origin' not in preload_images[data_info['imgId']].keys():
+            image = cv2.imread(origin_image_path)
+            image = cv2.resize(image, (self.input_weight, self.input_height))
+            preload_images[data_info['imgId']]['Origin'] = image
+
+        if data_info['f1'] not in preload_images[data_info['imgId']].keys():
+            image = cv2.imread(filter_image1_path)
+            image = cv2.resize(image, (self.input_weight, self.input_height))
+            preload_images[data_info['imgId']][data_info['f1']] = image
+        
+        if data_info['f2'] not in preload_images[data_info['imgId']].keys():
+            image = cv2.imread(filter_image2_path)
+            image = cv2.resize(image, (self.input_weight, self.input_height))
+            preload_images[data_info['imgId']][data_info['f2']] = image
+        
+        if(count % 100 == 0):
+            print("Preload image %d / %d" % (count, len(self.data_list)))
+        count += 1
+
+    origin_images = []
+    filter_images = []
+    for i in range(len(data_list)):
         # Read image data
         images = []
         labels = []
@@ -78,11 +124,8 @@ def exportModel():
 
 
 def test():
-    train_gen = batchGenerator(input_size = input_shape, batch_size = BATCH_SIZE, random = True)
-
     # Prepare the data
-    test_images, test_labels = train_gen.GetTestData()
-    filter_images, origin_images, test_labels = getTestData(test_images, test_labels)
+    filter_images, origin_images, test_labels = getTestData()
 
     # Create the model
     if(isexportModel):

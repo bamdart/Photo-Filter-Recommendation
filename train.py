@@ -3,7 +3,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from utils.DataManager import batchGenerator, threadsafe_iter
 from utils.Model import build_classify_model, Creat_train_Model
 
-isTrainClassify = 0
+isTrainClassify = 1
 
 workers = 32
 max_queue_size = 1000
@@ -31,8 +31,6 @@ def train():
 
     
     if(isTrainClassify):
-        _train_gen, _val_gen = threadsafe_iter(train_gen), threadsafe_iter(val_gen)
-
         classify_model = build_classify_model(params['image_size'], ouput_feature = False)
         classify_model.summary()
         classify_model.compile(loss= 'categorical_crossentropy', optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
@@ -41,16 +39,15 @@ def train():
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience = 5, verbose=1)
         early_stopping = EarlyStopping(monitor='val_loss', patience = 20, verbose=1)
 
-        classify_model.fit_generator(_train_gen,
+        classify_model.fit_generator(threadsafe_iter(train_gen),
                             steps_per_epoch = max(1, num_train // params['batch_size']), 
-                            validation_data = _val_gen, 
+                            validation_data = threadsafe_iter(val_gen), 
                             validation_steps = max(1, num_val // params['batch_size']),
                             epochs = 1000, verbose=1, workers = workers, max_queue_size = max_queue_size,
                             callbacks = [checkpoint, reduce_lr, early_stopping])
 
     train_gen.isClassify = False
     val_gen.isClassify = False
-    _train_gen, _val_gen = threadsafe_iter(train_gen), threadsafe_iter(val_gen)
 
     # Create the model
     classify_model, filter_model, score_model, model = Creat_train_Model(params['image_size'], classify_model_path = params['classify_model_path'])
@@ -63,9 +60,9 @@ def train():
     early_stopping = EarlyStopping(monitor='val_loss', patience = 20, verbose=1)
 
     # Start training
-    model.fit_generator(_train_gen,
+    model.fit_generator(threadsafe_iter(train_gen),
                         steps_per_epoch = max(1, num_train // params['batch_size']), 
-                        validation_data = _val_gen, 
+                        validation_data = threadsafe_iter(val_gen), 
                         validation_steps = max(1, num_val // params['batch_size']),
                         epochs = 1000, verbose=1, workers = workers, max_queue_size = max_queue_size,
                         callbacks = [checkpoint, reduce_lr, early_stopping])

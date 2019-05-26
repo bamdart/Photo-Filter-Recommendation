@@ -17,8 +17,6 @@ BATCH_SIZE = 32
 input_shape = (256, 256, 3)
 final_model_path = 'final_model.h5'
 
-#filter_dir = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe', 'Hudson', 'Inkwell', 'Lofi', 'LordKevin', 'Mayfair', 'Nashville', 'Origin', 'Poprocket', 'Rise', 'Sierra', 'Sutro', 'Toaster', 'Valencia', 'Walden', 'Willow', 'XProII']
-
 def getTestData(image_list, label_list):
     origin_images = []
     filter_images = []

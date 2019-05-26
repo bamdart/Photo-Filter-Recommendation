@@ -108,3 +108,4 @@ backup/
 FACD_image/
 data/
 export/
+*.h5

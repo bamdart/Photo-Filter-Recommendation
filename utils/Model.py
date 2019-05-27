@@ -4,26 +4,40 @@ from keras.models import Model
 from keras.layers import *
 from utils.module import *
 
-output_filters = 64
+output_filters = 128
 
 def build_filter_model(input_shape):
     # Define model input
     input_tensor = Input(input_shape)
 
-    x = convolution_BN_layer(16, kernel_size = (11, 11))(input_tensor)
-    x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
-
-    x = convolution_BN_layer(32, kernel_size = (5, 5))(x)
-    x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
-
-
-    x = separableConvolution_BN_layer(64, kernel_size = (3, 3))(x)
-    x = separableConvolution_BN_layer(64, kernel_size = (3, 3))(x)
+    x = convolution_BN_layer(16, kernel_size = (3, 3))(input_tensor)
     x = AvgPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
 
-    x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
-    x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
+
+    x = separableConvolution_BN_layer(32, kernel_size = (3, 3), dilation_rate=(2, 2), padding = 'valid')(x)
+    x = separableConvolution_BN_layer(32, kernel_size = (3, 3), dilation_rate=(1, 1))(x)
     x = AvgPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = separableConvolution_BN_layer(64, kernel_size = (3, 3), dilation_rate=(2, 2), padding = 'valid')(x)
+    x = separableConvolution_BN_layer(64, kernel_size = (3, 3), dilation_rate=(1, 1))(x)
+    x = AvgPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = convolution_BN_layer(128, kernel_size = (1, 1))(x)
+    for _ in range(3):
+        conv = x
+        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
+        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
+        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
+        x = Add()([conv, x])
+    x = AvgPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = convolution_BN_layer(128, kernel_size = (1, 1))(x)
+    for _ in range(3):
+        conv = x
+        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
+        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
+        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
+        x = Add()([conv, x])
 
     x = convolution_BN_layer(output_filters, kernel_size = (1, 1))(x)
     x = GlobalAveragePooling2D()(x)
@@ -31,7 +45,7 @@ def build_filter_model(input_shape):
 
     filter_model = Model(inputs = input_tensor, outputs = x)
     return filter_model
-
+'''
 def build_classify_model(input_shape, ouput_feature = False):
     # Define model input
     input_tensor = Input(input_shape)
@@ -67,6 +81,15 @@ def build_classify_model(input_shape, ouput_feature = False):
     else:
         classify_model = Model(inputs = input_tensor, outputs = x)
     return classify_model
+'''
+def build_classify_model(input_shape):
+    input_tensor = Input(input_shape)
+    x = Dense(8)(input_tensor)
+    x = BatchNormalization(1)(x)
+    x = Activation('softmax')(x)
+
+    classes_model = Model(inputs = input_tensor, outputs = x)
+    return classes_model
 
 def build_score_model(input_shape):
     input_tensor = Input(input_shape)
@@ -90,11 +113,11 @@ def Creat_train_Model(input_shape, classify_model_path):
     filter1_input = Input(input_shape)
     filter2_input = Input(input_shape)
     origin_input = Input(input_shape)
+    
 
     # get image feature
     filter1_feature = filter_model(filter1_input)
     filter2_feature = filter_model(filter2_input)
-    #classify_feature = classify_model(origin_input)
 
     # concat filter feature and classify feature
     #filter1_feature = Concatenate(axis = -1)([filter1_feature, classify_feature])

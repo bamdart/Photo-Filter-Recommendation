@@ -5,7 +5,7 @@ from keras.models import *
 from keras.regularizers import l1, l2
 from functools import reduce
 
-kernel_reg = l2(5e-3)
+kernel_reg = l2(5e-5)
 
 def compose(*funcs):
     """Compose arbitrarily many functions, evaluated left to right.

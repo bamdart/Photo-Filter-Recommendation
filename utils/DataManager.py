@@ -58,6 +58,7 @@ class batchGenerator:
             batch_filter1_images = []
             batch_filter2_images = []
             batch_category = []
+            batch_labels = []
             # Generate a batch of data
             for b in range(self.batch_size):
                 if(i == 0): # Shuffle the dataset
@@ -65,7 +66,7 @@ class batchGenerator:
                 
                 index = self.iter_index[i] # choose a data
                 # Read data
-                origin_image, filter_images, category = self.GetData(self.data_list[index])
+                origin_image, filter_images, category, label = self.GetData(self.data_list[index])
 
                 # Perform data augmentation 
                 if(self.random):
@@ -82,16 +83,19 @@ class batchGenerator:
 
                 batch_filter1_images.append(filter_images[0])
                 batch_filter2_images.append(filter_images[1])
+                batch_labels.append(label)
             
             # convert data type to float32
             batch_origin_images = np.array(batch_origin_images, dtype = np.float32)
             batch_category = np.array(batch_category, dtype = np.float32)
+            
             if(self.isClassify):
                 yield batch_origin_images, batch_category
             else:
                 batch_filter1_images = np.array(batch_filter1_images, dtype = np.float32)
                 batch_filter2_images = np.array(batch_filter2_images, dtype = np.float32)
-                yield [batch_filter1_images, batch_filter2_images, batch_origin_images], np.ones((self.batch_size,))
+                batch_labels = np.array(batch_labels, dtype = np.float32)
+                yield [batch_filter1_images, batch_filter2_images, batch_origin_images], batch_labels
     
     def datas_preprocessing(self, origin_image, filter_images, category):
         '''
@@ -133,15 +137,23 @@ class batchGenerator:
 
         filter_image1 = self.preload_images[data_info['imgId']][data_info['f1']]
         filter_image2 = self.preload_images[data_info['imgId']][data_info['f2']]
-
+        '''
         if(data_info['ans'] == 'right'):
             filter_image_pos = filter_image2
             filter_image_neg = filter_image1
         else:
-            filter_image_pos = filter_image1
-            filter_image_neg = filter_image2
+        '''
+        filter_image_pos = filter_image1
+        filter_image_neg = filter_image2
 
-        return origin_image, [filter_image_pos, filter_image_neg], category
+        if(data_info['ans'] == 'right'):
+            label = 0
+        elif(data_info['ans'] == 'equal'):
+            label = 0.5
+        else:
+            label = 1
+
+        return origin_image, [filter_image_pos, filter_image_neg], category, label
 
     def preload_image(self):
         preload_images = {}

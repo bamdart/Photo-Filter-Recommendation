@@ -6,7 +6,6 @@ import numpy as np
 import keras.backend as K
 import tensorflow as tf
 from utils.Model import Creat_train_Model, Creat_test_Model
-from utils.DataManager import batchGenerator
 import time
 import pickle
 

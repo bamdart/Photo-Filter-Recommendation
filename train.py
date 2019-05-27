@@ -3,7 +3,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from utils.DataManager import batchGenerator, threadsafe_iter
 from utils.Model import build_classify_model, Creat_train_Model
 
-isTrainClassify = 1
+isTrainClassify = 0
 
 workers = 32
 max_queue_size = 1000
@@ -12,20 +12,17 @@ params = {
         "epochs" : 30,
         "batch_size" : 32,
         
-
         "classify_model_path" : 'classify_model.h5',
         "filter_model_path" : 'filter_model.h5',
 
         "train_dataset_path" : 'data\\Training.pkl',
         "val_dataset_path" : 'data\\Validation.pkl',
-        "preload_dataset" : True,
 }
-
 
 def train():
     # Create data generator
-    train_gen = batchGenerator(data_path = params['train_dataset_path'], input_size = params['image_size'], batch_size = params['batch_size'], random = True, image_preload = params['preload_dataset'])
-    val_gen = batchGenerator(data_path = params['val_dataset_path'], input_size = params['image_size'], batch_size = params['batch_size'], random = True, image_preload = params['preload_dataset'])
+    train_gen = batchGenerator(data_path = params['train_dataset_path'], input_size = params['image_size'], batch_size = params['batch_size'], random = True)
+    val_gen = batchGenerator(data_path = params['val_dataset_path'], input_size = params['image_size'], batch_size = params['batch_size'], random = False)
     # Get dataset information
     num_train, num_val = len(train_gen), len(val_gen)
 
@@ -56,8 +53,8 @@ def train():
 
     # Callbacks list
     checkpoint = ModelCheckpoint(filepath = params['filter_model_path'], monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience = 5, verbose=1)
-    early_stopping = EarlyStopping(monitor='val_loss', patience = 20, verbose=1)
+    reduce_lr = ReduceLROnPlateau(monitor='val_acc', factor=0.1, patience = 5, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_acc', patience = 10, verbose=1)
 
     # Start training
     model.fit_generator(threadsafe_iter(train_gen),

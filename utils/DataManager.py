@@ -1,9 +1,14 @@
 import cv2
 import glob
+import pickle
 import threading
 import numpy as np
+import imgaug as ia
+from imgaug import augmenters as dataAug
 from keras.utils import to_categorical
-import pickle
+
+
+filters = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe', 'Hudson', 'Inkwell', 'Lofi', 'LordKevin', 'Mayfair', 'Nashville', 'Poprocket', 'Rise', 'Sierra', 'Sutro', 'Toaster', 'Valencia', 'Walden', 'Willow', 'XProII']
 
 class threadsafe_iter:
     """Takes an iterator/generator and makes it thread-safe by
@@ -25,7 +30,7 @@ class threadsafe_iter:
             return next(self.flow)
 
 class batchGenerator:
-    def __init__(self, data_path, input_size = (28, 28, 1), batch_size = 32, random = False, isClassify = True, image_preload = True):
+    def __init__(self, data_path, input_size = (28, 28, 1), batch_size = 32, random = False, isClassify = True):
         with open(data_path, 'rb') as f:
             self.data_list = pickle.load(f)
 
@@ -34,10 +39,8 @@ class batchGenerator:
         self.batch_size = batch_size
         self.random = random # perform data augmentation
         self.isClassify = isClassify
-
-        self.image_preload = image_preload
-        if(self.image_preload):
-            self.preload_images = self.preload_image()
+        self.preload_images = self.preload_image()
+        self.aug_seq = self.getAugParam()
 
         self.iter_index = np.arange(len(self.data_list)) # dataset index list
 
@@ -96,7 +99,7 @@ class batchGenerator:
         And one hot encode the labels.
         '''
         origin_image = cv2.resize(origin_image, (self.input_weight, self.input_height))
-        origin_image = np.array(origin_image, dtype = np.float32) / 255.0 
+        origin_image = np.array(origin_image, dtype = np.float32) / 255.0
 
         category = to_categorical(category, num_classes = 8)
         if(self.isClassify):
@@ -107,7 +110,7 @@ class batchGenerator:
             # resize image to fit model input
             image = cv2.resize(image, (self.input_weight, self.input_height))
             # normalize image data
-            image = np.array(image, dtype = np.float32) / 255.0 
+            image = np.array(image, dtype = np.float32) / 255.0
             filter_images[i] = image
         
         return origin_image, filter_images, category
@@ -116,28 +119,20 @@ class batchGenerator:
         '''
         Perform data augmentation.
         '''
+        seq_det = self.aug_seq.to_deterministic()
+        image = seq_det.augment_images([image])[0]
         return image
 
     def GetData(self, data_info):
-        origin_image_path = './data/FACD_image/Origin/' + data_info['imgId'] + '.jpg'
-        if(self.image_preload):
-            origin_image = self.preload_images[data_info['imgId']]['Origin']
-        else:
-            origin_image = cv2.imread(origin_image_path)
+        origin_image = self.preload_images[data_info['imgId']]['Origin']
 
         category = data_info['category']
         if(self.isClassify):
             return origin_image, None, category
+        
 
-        filter_image1_path = './data/FACD_image/'+ data_info['f1'] + '/' + data_info['imgId'] + '.jpg'
-        filter_image2_path = './data/FACD_image/'+ data_info['f2'] + '/' + data_info['imgId'] + '.jpg'
-
-        if(self.image_preload):
-            filter_image1 = self.preload_images[data_info['imgId']][data_info['f1']]
-            filter_image2 = self.preload_images[data_info['imgId']][data_info['f2']]
-        else:
-            filter_image1 = cv2.imread(filter_image1_path)
-            filter_image2 = cv2.imread(filter_image2_path)
+        filter_image1 = self.preload_images[data_info['imgId']][data_info['f1']]
+        filter_image2 = self.preload_images[data_info['imgId']][data_info['f2']]
 
         if(data_info['ans'] == 'right'):
             filter_image_pos = filter_image2
@@ -150,41 +145,41 @@ class batchGenerator:
 
     def preload_image(self):
         preload_images = {}
+        saved_imgId = []
         count = 0
         for i in range(len(self.data_list)):
             data_info = self.data_list[i]
-            origin_image_path = './data/FACD_image/Origin/' + data_info['imgId'] + '.jpg'
-            filter_image1_path = './data/FACD_image/'+ data_info['f1'] + '/' + data_info['imgId'] + '.jpg'
-            filter_image2_path = './data/FACD_image/'+ data_info['f2'] + '/' + data_info['imgId'] + '.jpg'
+            if(data_info['imgId'] in saved_imgId):
+                continue
 
-            if data_info['imgId'] not in preload_images.keys():
-                preload_images[data_info['imgId']] = {}
-        
-            if 'Origin' not in preload_images[data_info['imgId']].keys():
-                image = cv2.imread(origin_image_path)
-                image = cv2.resize(image, (self.input_weight, self.input_height))
-                preload_images[data_info['imgId']]['Origin'] = image
+            preload_images[data_info['imgId']] = {}
+            image_path = './data/FACD_image/Origin/' + data_info['imgId'] + '.jpg'
+            image = cv2.imread(image_path)
+            image = cv2.resize(image, (self.input_weight, self.input_height))
+            preload_images[data_info['imgId']]['Origin'] = image
     
-            if data_info['f1'] not in preload_images[data_info['imgId']].keys():
-                image = cv2.imread(filter_image1_path)
+            for filter_name in filters:
+                image_path = './data/FACD_image/'+ filter_name + '/' + data_info['imgId'] + '.jpg'
+                image = cv2.imread(image_path)
                 image = cv2.resize(image, (self.input_weight, self.input_height))
-                preload_images[data_info['imgId']][data_info['f1']] = image
-            
-            if data_info['f2'] not in preload_images[data_info['imgId']].keys():
-                image = cv2.imread(filter_image2_path)
-                image = cv2.resize(image, (self.input_weight, self.input_height))
-                preload_images[data_info['imgId']][data_info['f2']] = image
-            
+                preload_images[data_info['imgId']][filter_name] = image
+
+            saved_imgId.append(data_info['imgId'])
             if(count % 100 == 0):
-                print("Preload image %d / %d" % (count, len(self.data_list)))
+                print("Preload image %d / %d" % (count, len(self.data_list) // 33))
             count += 1
         return preload_images
 
-
+    def getAugParam(self):
+        seq = dataAug.Sequential([
+        dataAug.Fliplr(0.5),
+        dataAug.CropAndPad(percent=(-0.3, 0.3), pad_mode=["constant"], pad_cval=0), # crop
+        ], random_order=True) # apply augmenters in random order
+        return seq
 
 
 if __name__ == "__main__":
-    gen = batchGenerator(data_path = 'data/Training.pkl' ,input_size = (128, 128, 3), batch_size = 8, random = True)
+    gen = batchGenerator(data_path = 'data/Validation.pkl' ,input_size = (128, 128, 3), batch_size = 8, random = True)
     gen.isClassify = False
     gen = gen.flow()
 

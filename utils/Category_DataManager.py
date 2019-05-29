@@ -12,7 +12,7 @@ train_label_list = './data/category_metadata/train_label_list.pkl'
 test_image_list = './data/category_metadata/test_image_list.pkl'
 test_label_list = './data/category_metadata/test_label_list.pkl'
 
-val_num = 10000
+val_num = 1000
 
 class batchGenerator:
     def __init__(self, input_size = (28, 28, 1), batch_size = 32, aug = False):

@@ -6,7 +6,7 @@ from utils.Category_DataManager import batchGenerator
 import time
 
 BATCH_SIZE = 16
-input_shape = (128, 128, 3)
+input_shape = (64, 64, 3)
 image_dir = './data/category_image/'
 
 def getTestData(image_list, label_list):

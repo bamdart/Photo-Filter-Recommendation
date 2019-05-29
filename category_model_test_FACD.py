@@ -8,7 +8,7 @@ import pickle
 from keras.models import load_model
 
 BATCH_SIZE = 16
-input_shape = (128, 128, 3)
+input_shape = (64, 64, 3)
 image_dir = './data/category_image/'
 
 filter_dir = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe', 'Hudson', 'Inkwell', 'Lofi', 'LordKevin', 'Mayfair', 'Nashville', 'Origin', 'Poprocket', 'Rise', 'Sierra', 'Sutro', 'Toaster', 'Valencia', 'Walden', 'Willow', 'XProII']

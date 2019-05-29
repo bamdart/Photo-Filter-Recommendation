@@ -44,6 +44,24 @@ def separableConvolution_BN_layer(*args, **kwargs):
         BatchNormalization(),
         LeakyReLU(alpha=0.1))
 
+def DenseNet_module(input, out_channels = 128, num_block = 4):
+    x = input
+    conv_list = [input]
+    conv_channels = out_channels // num_block
+    for i in range(num_block):
+        x = BatchNormalization()(x)
+        x = Dropout(0.25)(x)
+        x = convolution_layer(conv_channels * 2, kernel_size = (1, 1))(x)
+        x = LeakyReLU(0.1)(x)
+        x = BatchNormalization()(x)
+        x = Dropout(0.25)(x)
+        x = convolution_layer(conv_channels, kernel_size = (3, 3))(x)
+        x = LeakyReLU(0.1)(x)
+        conv_list.append(x)
+        x = Concatenate(axis = -1)(conv_list)
+    return x
+
+
 if __name__ == "__main__":
     input_tensor = Input((100, 100, 256))
     x = input_tensor

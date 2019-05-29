@@ -49,10 +49,10 @@ def train():
     # Create the model
     classify_model, filter_model, score_model, model = Creat_train_Model(params['image_size'], classify_model_path = params['classify_model_path'])
     model.summary()
-    model.compile(loss= 'binary_crossentropy', optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
+    model.compile(loss= 'categorical_crossentropy', optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
 
     # Callbacks list
-    checkpoint = ModelCheckpoint(filepath = params['filter_model_path'], monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
+    checkpoint = ModelCheckpoint(filepath = params['filter_model_path'], monitor='val_acc', save_weights_only=True, save_best_only=True, period=1)
     reduce_lr = ReduceLROnPlateau(monitor='val_acc', factor=0.1, patience = 5, verbose=1)
     early_stopping = EarlyStopping(monitor='val_acc', patience = 10, verbose=1)
 

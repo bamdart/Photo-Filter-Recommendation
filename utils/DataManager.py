@@ -147,11 +147,16 @@ class batchGenerator:
         filter_image_neg = filter_image2
 
         if(data_info['ans'] == 'right'):
-            label = 0
+            label = [0, 1]
         elif(data_info['ans'] == 'equal'):
-            label = 0.5
+            label = [0.5, 0.5]
         else:
-            label = 1
+            label = [1, 0]
+
+        inverse_prob = np.random.rand()
+        if(inverse_prob > 0.5):
+            filter_image_pos, filter_image_neg = filter_image_neg, filter_image_pos
+            label = [label[1], label[0]]
 
         return origin_image, [filter_image_pos, filter_image_neg], category, label
 
@@ -185,7 +190,6 @@ class batchGenerator:
     def getAugParam(self):
         seq = dataAug.Sequential([
         dataAug.Fliplr(0.5),
-        dataAug.CropAndPad(percent=(-0.3, 0.3), pad_mode=["constant"], pad_cval=0), # crop
         ], random_order=True) # apply augmenters in random order
         return seq
 

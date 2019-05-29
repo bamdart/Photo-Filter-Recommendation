@@ -4,7 +4,7 @@ from keras.models import Model
 from keras.layers import *
 from utils.module import *
 
-output_filters = 128
+output_filters = 32
 
 def build_filter_model(input_shape):
     # Define model input
@@ -22,23 +22,13 @@ def build_filter_model(input_shape):
     x = separableConvolution_BN_layer(64, kernel_size = (3, 3), dilation_rate=(1, 1))(x)
     x = AvgPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
 
-    x = convolution_BN_layer(128, kernel_size = (1, 1))(x)
-    for _ in range(3):
-        conv = x
-        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
-        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
-        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
-        x = Add()([conv, x])
+    x = separableConvolution_BN_layer(128, kernel_size = (3, 3), dilation_rate=(2, 2), padding = 'valid')(x)
+    x = separableConvolution_BN_layer(128, kernel_size = (3, 3), dilation_rate=(1, 1))(x)
     x = AvgPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
 
     x = convolution_BN_layer(128, kernel_size = (1, 1))(x)
-    for _ in range(3):
-        conv = x
-        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
-        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
-        x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
-        x = Add()([conv, x])
-
+    x = separableConvolution_BN_layer(128, kernel_size = (3, 3))(x)
+    x = separableConvolution_BN_layer(64, kernel_size = (3, 3))(x)
     x = convolution_BN_layer(output_filters, kernel_size = (1, 1))(x)
     x = GlobalAveragePooling2D()(x)
 
@@ -93,7 +83,9 @@ def build_classify_model(input_shape):
 
 def build_score_model(input_shape):
     input_tensor = Input(input_shape)
-    score = Dense(1)(input_tensor)
+    x = Dense(128)(input_tensor)
+    x = Dense(32)(x)
+    score = Dense(1)(x)
 
     score_model = Model(inputs = input_tensor, outputs = score)
     return score_model
@@ -122,19 +114,24 @@ def Creat_train_Model(input_shape, classify_model_path):
     # concat filter feature and classify feature
     #filter1_feature = Concatenate(axis = -1)([filter1_feature, classify_feature])
     #filter2_feature = Concatenate(axis = -1)([filter2_feature, classify_feature])
-
+    
     # classify
     filter1_score = score_model(filter1_feature)
     filter2_score = score_model(filter2_feature)
 
     # merge score
     merge_score = Concatenate(axis = -1)([filter1_score, filter2_score])
+
     prob = Activation('softmax')(merge_score)
     # only output pos > neg prob
-    pos_prob = Lambda(lambda x: x[:,0])(prob)
-    pos_prob = Reshape((1,))(pos_prob)
+    #pos_prob = Lambda(lambda x: x[:,0])(prob)
+    #pos_prob = Reshape((1,))(pos_prob)
 
-    model = Model(inputs = [filter1_input, filter2_input, origin_input], outputs = pos_prob)
+    model = Model(inputs = [filter1_input, filter2_input, origin_input], outputs = prob)
+    '''
+    model_loss = Lambda(loss_function, output_shape=(1,), name='loss_function')([filter1_feature, filter2_feature])
+    model = Model([filter1_input, filter2_input], model_loss)
+    '''
     return None, filter_model, score_model, model
 
 def Creat_test_Model(input_shape):
@@ -161,48 +158,19 @@ def Creat_test_Model(input_shape):
     model = Model(inputs = filter_input, outputs = filter_score)
     return None, filter_model, score_model, model
 
-def block(x, filters):
-    filters = filters // 4
-
-    x1 = Conv2D(filters = filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
-    x1 = BatchNormalization()(x1)
-    x1 = LeakyReLU(alpha=0.1)(x1)
-
-    x2 = Conv2D(filters = filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x1)
-    x2 = BatchNormalization()(x2)
-    x2 = LeakyReLU(alpha=0.1)(x2)
-
-    x3 = Concatenate(axis = -1)([x1,x2])
-    x3 = Conv2D(filters = filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x3)
-    x3 = BatchNormalization()(x3)
-    x3 = LeakyReLU(alpha=0.1)(x3)
-
-    x4 = Concatenate(axis = -1)([x1,x2, x3])
-    x4 = Conv2D(filters = filters, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x4)
-    x4 = BatchNormalization()(x4)
-    x4 = LeakyReLU(alpha=0.1)(x4)
-
-    x5 = Concatenate(axis = -1)([x1,x2, x3, x4])
-
-    return x5
 
 
-
-
-
-'''
 def loss_function(args):
     Fused_feature1 = args[0]
     Fused_feature2 = args[1]
-    category_feature = args[2]
-    category_label = args[3]
+    #category_feature = args[2]
+    #category_label = args[3]
 
     feature_responses1 = tf.math.square(tf.norm(Fused_feature1, axis = -1, ord='euclidean'))
     feature_responses2 = tf.math.square(tf.norm(Fused_feature2, axis = -1, ord='euclidean'))
 
-    reponse_loss = -tf.reduce_sum(feature_responses1 - feature_responses2)
-    category_loss = tf.losses.softmax_cross_entropy(category_label, category_feature)
+    reponse_loss = -tf.reduce_sum(feature_responses1 - feature_responses2) / 32
+    #category_loss = tf.losses.softmax_cross_entropy(category_label, category_feature)
 
-    model_loss = reponse_loss + category_loss
+    model_loss = reponse_loss #+ category_loss
     return model_loss
-'''

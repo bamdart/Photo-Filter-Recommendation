@@ -64,11 +64,11 @@ def exportModel():
     os.mkdir(export_path)  
 
     # load all weight
-    classify_model, filter_model, score_model, model = Creat_train_Model(input_shape = input_shape, classify_model_path = classify_model_path)
+    classify_model, filter_model, score_model, model = Creat_train_Model(input_shape = input_shape)
     model.load_weights(filter_model_path)
 
     # save weight respectively
-    #classify_model.save_weights(export_path + '1.h5')
+    classify_model.save_weights(export_path + '1.h5')
     filter_model.save_weights(export_path + '2.h5')
     score_model.save_weights(export_path + '3.h5')
 
@@ -77,14 +77,13 @@ def exportModel():
 
     # load weight respectively
     classify_model, filter_model, score_model, model = Creat_test_Model(input_shape = input_shape)
-    #classify_model.load_weights(export_path + '1.h5')
+    classify_model.load_weights(export_path + '1.h5')
     filter_model.load_weights(export_path + '2.h5')
     score_model.load_weights(export_path + '3.h5')
 
     # save all weight
     model.save_weights(final_model_path)
     return model
-
 
 
 def test():
@@ -106,12 +105,11 @@ def test():
     origin_images = np.reshape(origin_images, (-1,input_shape[0],input_shape[1],input_shape[2]))
 
     s = time.time()
-    score = model.predict(filter_images)
+    score = model.predict([filter_images, origin_images])
     print('time spend ' + str(time.time() - s) + ' s')
     # Decode
     score = np.reshape(score, (-1, 22))
     ranking = np.argsort(-score)
-
 
     top1 = 0.0   
     top3 = 0.0  
@@ -120,12 +118,12 @@ def test():
         pred_ranking = ranking[i][:5]
         for j in range(len(pred_ranking)):
             p = pred_ranking[j]
-            if(p == 0 and filters[p] in test_labels[i]):
+            if(j == 0 and filters[p] in test_labels[i]):
                 top1 += 1.0
                 top3 += 1.0
                 top5 += 1.0
                 break
-            if(p < 3 and filters[p] in test_labels[i]):
+            if(j< 3 and filters[p] in test_labels[i]):
                 top3 += 1.0
                 top5 += 1.0
                 break

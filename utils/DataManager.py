@@ -30,7 +30,7 @@ class threadsafe_iter:
             return next(self.flow)
 
 class batchGenerator:
-    def __init__(self, data_path, input_size = (28, 28, 1), batch_size = 32, random = False, isClassify = True):
+    def __init__(self, data_path, input_size = (28, 28, 1), batch_size = 32, random = False):
         with open(data_path, 'rb') as f:
             self.data_list = pickle.load(f)
 
@@ -38,7 +38,6 @@ class batchGenerator:
         self.input_weight = input_size[1] # model input size
         self.batch_size = batch_size
         self.random = random # perform data augmentation
-        self.isClassify = isClassify
         self.preload_images = self.preload_image()
         self.aug_seq = self.getAugParam()
 
@@ -78,9 +77,6 @@ class batchGenerator:
                 i = (i + 1) % n
                 batch_origin_images.append(origin_image)
                 batch_category.append(category)
-                if(self.isClassify):
-                    continue
-
                 batch_filter1_images.append(filter_images[0])
                 batch_filter2_images.append(filter_images[1])
                 batch_labels.append(label)
@@ -88,14 +84,10 @@ class batchGenerator:
             # convert data type to float32
             batch_origin_images = np.array(batch_origin_images, dtype = np.float32)
             batch_category = np.array(batch_category, dtype = np.float32)
-            
-            if(self.isClassify):
-                yield batch_origin_images, batch_category
-            else:
-                batch_filter1_images = np.array(batch_filter1_images, dtype = np.float32)
-                batch_filter2_images = np.array(batch_filter2_images, dtype = np.float32)
-                batch_labels = np.array(batch_labels, dtype = np.float32)
-                yield [batch_filter1_images, batch_filter2_images, batch_origin_images], batch_labels
+            batch_filter1_images = np.array(batch_filter1_images, dtype = np.float32)
+            batch_filter2_images = np.array(batch_filter2_images, dtype = np.float32)
+            batch_labels = np.array(batch_labels, dtype = np.float32)
+            yield [batch_filter1_images, batch_filter2_images, batch_origin_images, batch_labels, batch_category], np.zeros(self.batch_size)
     
     def datas_preprocessing(self, origin_image, filter_images, category):
         '''
@@ -104,10 +96,7 @@ class batchGenerator:
         '''
         origin_image = cv2.resize(origin_image, (self.input_weight, self.input_height))
         origin_image = np.array(origin_image, dtype = np.float32) / 255.0
-
         category = to_categorical(category, num_classes = 8)
-        if(self.isClassify):
-            return origin_image, None, category
 
         for i in range(len(filter_images)):
             image = filter_images[i]
@@ -129,22 +118,10 @@ class batchGenerator:
 
     def GetData(self, data_info):
         origin_image = self.preload_images[data_info['imgId']]['Origin']
-
         category = data_info['category']
-        if(self.isClassify):
-            return origin_image, None, category
-        
 
-        filter_image1 = self.preload_images[data_info['imgId']][data_info['f1']]
-        filter_image2 = self.preload_images[data_info['imgId']][data_info['f2']]
-        '''
-        if(data_info['ans'] == 'right'):
-            filter_image_pos = filter_image2
-            filter_image_neg = filter_image1
-        else:
-        '''
-        filter_image_pos = filter_image1
-        filter_image_neg = filter_image2
+        filter_image_pos = self.preload_images[data_info['imgId']][data_info['f1']]
+        filter_image_neg = self.preload_images[data_info['imgId']][data_info['f2']]
 
         if(data_info['ans'] == 'right'):
             label = [0, 1]
@@ -196,7 +173,6 @@ class batchGenerator:
 
 if __name__ == "__main__":
     gen = batchGenerator(data_path = 'data/Validation.pkl' ,input_size = (128, 128, 3), batch_size = 8, random = True)
-    gen.isClassify = False
     gen = gen.flow()
 
     input, output = next(gen)

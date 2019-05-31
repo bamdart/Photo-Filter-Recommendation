@@ -1,10 +1,9 @@
+import keras.backend as K
 from keras import optimizers
 from keras import metrics
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from utils.DataManager import batchGenerator, threadsafe_iter
-from utils.Model import build_classify_model, Creat_train_Model
-
-isTrainClassify = 0
+from utils.Model import build_classify_model, Creat_train_Model, loss_function
 
 workers = 32
 max_queue_size = 1000
@@ -20,16 +19,6 @@ params = {
         "val_dataset_path" : 'data\\Validation.pkl',
 }
 
-# define monitor
-def classify_acc(y_true, y_pred):
-    classify_label = y_true[2:]
-    classify_pred = y_pred[2:]
-    return metrics.categorical_accuracy(y_true = classify_label, y_pred = classify_pred)
-def filter_acc(y_true, y_pred):
-    filter_label = y_true[:2]
-    filter_pred = y_pred[:2]
-    return metrics.categorical_accuracy(y_true = filter_label, y_pred = filter_pred)
-
 def train():
     # Create data generator
     train_gen = batchGenerator(data_path = params['train_dataset_path'], input_size = params['image_size'], batch_size = params['batch_size'], random = True)
@@ -39,12 +28,13 @@ def train():
 
     # Create the model
     classify_model, filter_model, score_model, model = Creat_train_Model(params['image_size'])
-    model.compile(loss= {'loss_function': lambda y_true, y_pred: y_pred}, optimizer = optimizers.Adam(1e-3), metrics=[classify_acc, filter_acc])
+
+    model.compile(loss = loss_function, optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
 
     # Callbacks list
-    checkpoint = ModelCheckpoint(filepath = params['filter_model_path'], monitor = 'val_filter_acc', save_weights_only=True, save_best_only=True, period=1)
-    reduce_lr = ReduceLROnPlateau(monitor='val_filter_acc', factor=0.1, patience = 5, verbose=1)
-    early_stopping = EarlyStopping(monitor='val_filter_acc', patience = 10, verbose=1)
+    checkpoint = ModelCheckpoint(filepath = params['filter_model_path'], monitor = 'val_filter_output_acc', save_weights_only=True, save_best_only=True, period=1)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience = 5, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', patience = 10, verbose=1)
 
     # Start training
     model.fit_generator(threadsafe_iter(train_gen),

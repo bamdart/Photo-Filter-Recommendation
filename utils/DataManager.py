@@ -87,7 +87,7 @@ class batchGenerator:
             batch_filter1_images = np.array(batch_filter1_images, dtype = np.float32)
             batch_filter2_images = np.array(batch_filter2_images, dtype = np.float32)
             batch_labels = np.array(batch_labels, dtype = np.float32)
-            yield [batch_filter1_images, batch_filter2_images, batch_origin_images, batch_labels, batch_category], np.zeros(self.batch_size)
+            yield [batch_filter1_images, batch_filter2_images, batch_origin_images], [batch_labels, batch_category]
     
     def datas_preprocessing(self, origin_image, filter_images, category):
         '''

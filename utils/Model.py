@@ -90,15 +90,10 @@ def Creat_train_Model(input_shape):
     filter2_score = score_model(filter2_feature)
 
     # predict
-    filters_pred = Concatenate(axis = -1)([filter1_score, filter2_score])
-    classify_pred = Dense(8)(classify_feature)
+    filters_pred = Concatenate(axis = -1, name = 'filter_output')([filter1_score, filter2_score])
+    classify_pred = Dense(8, name = 'category_output')(classify_feature)
 
-    # define loss function
-    filters_label = Input((2,))
-    classify_label = Input((8,))
-    model_loss = Lambda(loss_function, output_shape=(1,), name='loss_function')([filters_pred, classify_pred, filters_label, classify_label])
-
-    model = Model([filter1_input, filter2_input, origin_input, filters_label, classify_label], model_loss)
+    model = Model([filter1_input, filter2_input, origin_input], [filters_pred, classify_pred])
     return classify_model, filter_model, score_model, model
 
 def Creat_test_Model(input_shape):
@@ -125,15 +120,5 @@ def Creat_test_Model(input_shape):
     return classify_model, filter_model, score_model, model
 
 
-def loss_function(args):
-    filters_pred = args[0]
-    classify_pred = args[1]
-
-    filters_label = args[2]
-    category_label = args[3]
-
-    filters_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels = filters_label, logits = filters_pred)
-    category_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels = category_label, logits = classify_pred)
-
-    model_loss = filters_loss + category_loss
-    return model_loss
+def loss_function(y_true, y_pred):
+    return tf.nn.softmax_cross_entropy_with_logits_v2(labels = y_true, logits = y_pred)

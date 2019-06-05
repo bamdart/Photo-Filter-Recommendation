@@ -109,3 +109,4 @@ FACD_image/
 data/
 export/
 *.h5
+output_model/

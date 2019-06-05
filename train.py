@@ -10,7 +10,7 @@ max_queue_size = 1000
 params = {
         "image_size" : (128, 128, 3),
         "epochs" : 30,
-        "batch_size" : 32,
+        "batch_size" : 16,
         
         "classify_model_path" : 'classify_model.h5',
         "filter_model_path" : 'filter_model.h5',
@@ -20,16 +20,15 @@ params = {
 }
 
 def train():
+    # Create the model
+    classify_model, filter_model, score_model, model = Creat_train_Model(params['image_size'])
+    model.compile(loss = loss_function, optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
+
     # Create data generator
     train_gen = batchGenerator(data_path = params['train_dataset_path'], input_size = params['image_size'], batch_size = params['batch_size'], random = True)
     val_gen = batchGenerator(data_path = params['val_dataset_path'], input_size = params['image_size'], batch_size = params['batch_size'], random = False)
     # Get dataset information
     num_train, num_val = len(train_gen), len(val_gen)
-
-    # Create the model
-    classify_model, filter_model, score_model, model = Creat_train_Model(params['image_size'])
-
-    model.compile(loss = loss_function, optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
 
     # Callbacks list
     checkpoint = ModelCheckpoint(filepath = params['filter_model_path'], monitor = 'val_filter_output_acc', save_weights_only=True, save_best_only=True, period=1)

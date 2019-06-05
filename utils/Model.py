@@ -4,8 +4,8 @@ from keras.models import Model
 from keras.layers import *
 from utils.module import *
 
-output_filters = 64
-
+output_filters = 32
+'''
 def build_filter_model(input_shape):
     # Define model input
     input_tensor = Input(input_shape)
@@ -34,7 +34,8 @@ def build_filter_model(input_shape):
 
     filter_model = Model(inputs = input_tensor, outputs = x)
     return filter_model
-
+'''
+'''
 def build_classify_model(input_shape):
     # Define model input
     input_tensor = Input(input_shape)
@@ -42,17 +43,129 @@ def build_classify_model(input_shape):
     x = convolution_BN_layer(16, kernel_size = (3, 3), strides = (2, 2))(input_tensor)
     x = convolution_BN_layer(32, kernel_size = (5, 5))(x)
     x = MaxPooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+    x = Dropout(0.4)(x)
 
     x = DenseNet_module(x, out_channels = 64)
     x = MaxPooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+    x = Dropout(0.4)(x)
 
     x = DenseNet_module(x, out_channels = 128)
     x = MaxPooling2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
-
-    x = DenseNet_module(x, out_channels = 256)
+    x = Dropout(0.4)(x)
+    
+    # x = DenseNet_module(x, out_channels = 256)
 
     x = convolution_layer(output_filters, kernel_size = (1, 1))(x)
     x = GlobalAveragePooling2D()(x)
+
+    classify_model = Model(inputs = input_tensor, outputs = x)
+    return classify_model
+'''
+def build_filter_model(input_shape):
+    input_tensor = Input(input_shape)
+
+    x_shortcut = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(input_tensor)
+    x_shortcut = BatchNormalization()(x_shortcut)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(input_tensor)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = Add()([x, x_shortcut])
+    x = LeakyReLU(alpha=0.2)(x)
+    x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+    # x = Dropout(0.1)(x)
+
+    x_shortcut = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x_shortcut = BatchNormalization()(x_shortcut)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = Add()([x, x_shortcut])
+    x = LeakyReLU(alpha=0.2)(x)
+    x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+    # x = Dropout(0.1)(x)
+
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+
+    x = convolution_BN_layer(output_filters, kernel_size = (1, 1))(x)
+    x = GlobalAveragePooling2D()(x)
+
+    # x = Dense(128)(x)
+    x = Dense(output_filters)(x)
+
+    filter_model = Model(inputs = input_tensor, outputs = x)
+    return filter_model
+
+def build_classify_model(input_shape):
+    # Define model input
+    input_tensor = Input(input_shape)
+
+    x_shortcut = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(input_tensor)
+    x_shortcut = BatchNormalization()(x_shortcut)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(input_tensor)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = Add()([x, x_shortcut])
+    x = LeakyReLU(alpha=0.1)(x)
+    x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+    x = Dropout(0.3)(x)
+
+    x_shortcut = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x_shortcut = BatchNormalization()(x_shortcut)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.1)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = Add()([x, x_shortcut])
+    x = LeakyReLU(alpha=0.1)(x)
+    x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+    x = Dropout(0.3)(x)
+
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
+    x = BatchNormalization()(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
+    x = Dropout(0.3)(x)
+
+    x = convolution_layer(output_filters, kernel_size = (1, 1))(x)
+    x = GlobalAveragePooling2D()(x)
+
+    x = Dense(128)(x)
+    x = Dense(output_filters)(x)
 
     classify_model = Model(inputs = input_tensor, outputs = x)
     return classify_model

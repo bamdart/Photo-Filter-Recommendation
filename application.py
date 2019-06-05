@@ -5,7 +5,7 @@ import shutil
 import numpy as np
 import keras.backend as K
 import tensorflow as tf
-from utils.Model import Creat_train_Model, Creat_test_Model
+from utils.Model import Creat_train_Model
 import time
 import pickle
 import matplotlib.pyplot as plt
@@ -55,40 +55,40 @@ def read_data(image_path):
     filter_images = np.array(filter_images, dtype = np.float32)
     return filter_images, origin_images
 
-def exportModel():
-    export_path = 'export\\'
-    shutil.rmtree(export_path, ignore_errors=True)
-    os.mkdir(export_path)  
+def Predict(classify_model, filter_model, score_model, origin_images, filter_images):
+    # get the information
+    batch_size = len(filter_images)
+    image_size = origin_images.shape[1:4]
+    filters_num = filter_images.shape[1]
 
-    # load all weight
-    classify_model, filter_model, score_model, model = Creat_train_Model(input_shape = input_shape)
-    model.load_weights(filter_model_path)
+    # preprocessing filter images
+    filter_images = np.reshape(filter_images, (-1,) + image_size)
 
-    # save weight respectively
-    classify_model.save_weights(export_path + '1.h5')
-    filter_model.save_weights(export_path + '2.h5')
-    score_model.save_weights(export_path + '3.h5')
+    # get images feature
+    origin_features = classify_model.predict(origin_images)
+    filter_features = filter_model.predict(filter_images)
 
-    # clear
-    K.clear_session()
+    feature_size = filter_features.shape[-1]
 
-    # load weight respectively
-    classify_model, filter_model, score_model, model = Creat_test_Model(input_shape = input_shape)
-    classify_model.load_weights(export_path + '1.h5')
-    filter_model.load_weights(export_path + '2.h5')
-    score_model.load_weights(export_path + '3.h5')
+    # make origin and filters pair
+    origin_features = np.expand_dims(origin_features, axis = 1)
+    origin_features = np.repeat(origin_features, filters_num, axis = 1)
+    filter_features = np.reshape(filter_features, (-1, filters_num, feature_size))
 
-    # save all weight
-    model.save_weights(final_model_path)
-    return model
+    # concat feature
+    combine_features = np.concatenate((filter_features, origin_features), axis = -1)
+    combine_features = np.reshape(combine_features, (-1, feature_size * 2))
+    
+    # get score
+    score = score_model.predict(combine_features)
+    score = np.reshape(score, (batch_size, filters_num))
+    return score
+
 
 if __name__ == "__main__":
     # Create the model
-    if(isexportModel):
-        model = exportModel()
-    else:
-        _, _, _, model = Creat_test_Model(input_shape = input_shape)
-        model.load_weights(final_model_path)
+    classify_model, filter_model, score_model, model = Creat_train_Model(input_shape = input_shape)
+    model.load_weights(filter_model_path)
 
     while(1):
         fig=plt.figure(figsize=(15, 10))
@@ -99,16 +99,10 @@ if __name__ == "__main__":
         
         s = time.time()
         filter_images, origin_images = read_data(image_path)
-        # Predict
-        origin_images = np.expand_dims(origin_images, axis = 1)
-        origin_images = np.repeat(origin_images, len(has_filters), axis = 1)
-
-        filter_images = np.reshape(filter_images, (-1,input_shape[0],input_shape[1],input_shape[2]))
-        origin_images = np.reshape(origin_images, (-1,input_shape[0],input_shape[1],input_shape[2]))
         print('preprocess time spend ' + str(time.time() - s) + ' s')
 
         s = time.time()
-        score = model.predict([filter_images, origin_images])
+        score = Predict(classify_model, filter_model, score_model, origin_images, filter_images)
         print('model predict time spend ' + str(time.time() - s) + ' s')
         # Decode
         score = np.reshape(score, (-1, len(has_filters)))

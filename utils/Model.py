@@ -1,4 +1,5 @@
 import keras
+import keras.backend as K
 import tensorflow as tf
 from keras.models import Model
 from keras.layers import *
@@ -209,29 +210,6 @@ def Creat_train_Model(input_shape):
     model = Model([filter1_input, filter2_input, origin_input], [filters_pred, classify_pred])
     return classify_model, filter_model, score_model, model
 
-def Creat_test_Model(input_shape):
-    # build the model
-    classify_model = build_classify_model(input_shape)
-    filter_model = build_filter_model(input_shape)
-    score_model = build_score_model((output_filters * 2,))
-
-    # define input
-    filter_input = Input(input_shape)
-    origin_input = Input(input_shape)
-
-    # get image feature
-    filter_feature = filter_model(filter_input)
-    classify_feature = classify_model(origin_input)
-
-    # concat filter feature and classify feature
-    filter_feature = Concatenate(axis = -1)([filter_feature, classify_feature])
-
-    # classify
-    filter_score = score_model(filter_feature)
-
-    model = Model(inputs = [filter_input, origin_input], outputs = filter_score)
-    return classify_model, filter_model, score_model, model
-
-
 def loss_function(y_true, y_pred):
     return tf.nn.softmax_cross_entropy_with_logits_v2(labels = y_true, logits = y_pred)
+

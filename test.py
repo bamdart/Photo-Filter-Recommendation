@@ -14,7 +14,7 @@ filter_model_path = params['filter_model_path']
 classify_model_path = params['classify_model_path']
 
 
-input_shape = (128, 128, 3)
+input_shape = (32, 32, 3)
 final_model_path = 'final_model.h5'
 test_dataset_path = 'data\\Testing.pkl'
 

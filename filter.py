@@ -6,14 +6,15 @@ import numpy as np
 import cv2
 
 #Amaron
-def get_coeff(points):
+def get_coeff( points ):
+
     x = []
     y = []
     R = []
 
     for p in points:
-        x.append(p[0])
-        y.append(p[1]) 
+        x.append( p[0] )
+        y.append( p[1] ) 
 
     l = len(points)-1
     for i in range(0, l+1):
@@ -167,7 +168,11 @@ def filter_process(img, filter):
     return cv2.cvtColor(np.asarray(switcher.get(filter, "nothing")),cv2.COLOR_RGB2BGR)  
 
 if(__name__ == '__main__'):
+    # im = Image.open('bt21.jpg')
     img = cv2.imread('bt21.jpg')
-    img = filter_process(img, 'Nashville')
+    new_img = filter_process(img, 'Nashville')
+    # new_img.show()
+    img = np.asarray(new_img)
+    # img = cv2.cvtColor(np.asarray(new_img),cv2.COLOR_RGB2BGR)  
     cv2.imshow("OpenCV",img)  
-    cv2.waitKey(0)
+    cv2.waitKey()

@@ -8,9 +8,9 @@ from utils.Model import build_classify_model, Creat_train_Model, loss_function
 workers = 32
 max_queue_size = 1000
 params = {
-        "image_size" : (128, 128, 3),
+        "image_size" : (32, 32, 3),
         "epochs" : 30,
-        "batch_size" : 16,
+        "batch_size" : 32,
         
         "classify_model_path" : 'classify_model.h5',
         "filter_model_path" : 'filter_model.h5',
@@ -22,6 +22,9 @@ params = {
 def train():
     # Create the model
     classify_model, filter_model, score_model, model = Creat_train_Model(params['image_size'])
+    classify_model.summary()
+    filter_model.summary()
+    score_model.summary()
     model.compile(loss = loss_function, optimizer = optimizers.Adam(1e-3), metrics=['accuracy'])
 
     # Create data generator
@@ -38,7 +41,7 @@ def train():
     # Start training
     model.fit_generator(threadsafe_iter(train_gen),
                         steps_per_epoch = max(1, num_train // params['batch_size']), 
-                        validation_data = threadsafe_iter(val_gen), 
+                        validation_data = threadsafe_iter(val_gen),
                         validation_steps = max(1, num_val // params['batch_size']),
                         epochs = 1000, verbose=1, workers = workers, max_queue_size = max_queue_size,
                         callbacks = [checkpoint, reduce_lr, early_stopping])

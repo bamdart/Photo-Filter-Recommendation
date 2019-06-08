@@ -19,7 +19,7 @@ classify_model_path = params['classify_model_path']
 isexportModel = 1
 
 BATCH_SIZE = 32
-input_shape = (128, 128, 3)
+input_shape = (32, 32, 3)
 final_model_path = 'final_model.h5'
 test_dataset_path = 'data\\Testing.pkl'
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
         s = time.time()
         origin_image = cv2.imread(image_path)
-        w = 256
+        w = 128
         h = int(origin_image.shape[0] * w / origin_image.shape[1])
         preprocess_filter_image = preprocess_image(img = origin_image, w = w, h = h)
         origin_image = cv2.resize(origin_image, (w, h))

@@ -9,15 +9,12 @@ import pickle
 import matplotlib.pyplot as plt
 
 from filter import filter_process, preprocess_image
+from export_model import filters_num
 
-
-classify_model_path = 'output_model\\classify_model.pb'
-filter_model_path = 'output_model\\filter_model.pb'
-score_model_path = 'output_model\\score_model.pb'
+model_path = 'output_model\\final_model.pb'
 
 BATCH_SIZE = 32
-input_shape = (128, 128, 3)
-final_model_path = 'final_model.h5'
+input_shape = (32, 32, 3)
 test_dataset_path = 'data\\Testing.pkl'
 
 filters = ['1977', 'Amaro', 'Apollo', 'Brannan', 'Earlybird', 'Gotham', 'Hefe', 'Hudson', 'Inkwell', 'Lofi', 'LordKevin', 'Mayfair', 'Nashville', 'Poprocket', 'Rise', 'Sierra', 'Sutro', 'Toaster', 'Valencia', 'Walden', 'Willow', 'XProII']
@@ -52,33 +49,17 @@ def read_data(image_path):
     filter_images = np.array(filter_images, dtype = np.float32)
     return filter_images, origin_images
 
-def Predict(classify_model, filter_model, score_model, origin_images, filter_images):
-    # get the information
-    batch_size = len(filter_images)
-    image_size = origin_images.shape[1:4]
-    filters_num = filter_images.shape[1]
+def Predict(model, origin_images, filter_images):
+    filter_images = filter_images[0]
+    '''
+    輸入 
+    origin_image shape = (1, 32, 32, 3)
+    filter_images shape = (16, 32, 32, 3)
 
-    # preprocessing filter images
-    filter_images = np.reshape(filter_images, (-1,) + image_size)
-
-    # get images feature
-    origin_features = ModelPredict(classify_model, origin_images) #origin_features = classify_model.predict(origin_images)
-    filter_features = ModelPredict(filter_model, filter_images) #filter_features = filter_model.predict(filter_images)
-
-    feature_size = filter_features.shape[-1]
-
-    # make origin and filters pair
-    origin_features = np.expand_dims(origin_features, axis = 1)
-    origin_features = np.repeat(origin_features, filters_num, axis = 1)
-    filter_features = np.reshape(filter_features, (-1, filters_num, feature_size))
-
-    # concat feature
-    combine_features = np.concatenate((filter_features, origin_features), axis = -1)
-    combine_features = np.reshape(combine_features, (-1, feature_size * 2))
-    
-    # get score
-    score = ModelPredict(score_model, combine_features) #score = score_model.predict(combine_features)
-    score = np.reshape(score, (batch_size, filters_num))
+    輸出
+    score shape = (16, 1)
+    '''
+    score = ModelPredict(model, origin_images, filter_images)
     return score
 
 def CreateModel(model_path, model_name):
@@ -90,26 +71,35 @@ def CreateModel(model_path, model_name):
     with graph.as_default():
         tf.import_graph_def(graph_def, name = model_name)
         sess = tf.Session(graph = graph)
-        input_tensor = graph.get_tensor_by_name(model_name + '/input_1:0')
+        input_tensors = []
+        for i in range(filters_num + 1):
+            node_name = '/input_{}:0'.format((i + 4))
+            input_tensor = graph.get_tensor_by_name(model_name + node_name)
+            input_tensors.append(input_tensor)
         pred_tensor = graph.get_tensor_by_name(model_name + '/Prediction_0:0')
-    return sess, input_tensor, pred_tensor
+    return sess, input_tensors, pred_tensor
 
-def ModelPredict(model, image_data):
-    sess, input_tensor, pred_tensor = model
-    preds = sess.run(pred_tensor, feed_dict = {input_tensor : image_data})
+def ModelPredict(model, origin_images, filter_images):
+    sess, input_tensors, pred_tensor = model
+    filter_images = np.expand_dims(filter_images, axis = 1)
+
+    feed_dict = {}
+    feed_dict[input_tensors[0]] = origin_images
+    for i in range(filters_num):
+        feed_dict[input_tensors[i + 1]] = filter_images[i]
+
+    preds = sess.run(pred_tensor, feed_dict = feed_dict)
     return preds
 
 
 if __name__ == "__main__":
     # Create the model
-    classify_model = CreateModel(classify_model_path, 'classify')
-    filter_model = CreateModel(filter_model_path, 'filter')
-    score_model = CreateModel(score_model_path, 'score')
+    model = CreateModel(model_path, 'final')
 
     while(1):
         fig=plt.figure(figsize=(15, 10))
 
-        image_path = input('input image path : ')
+        image_path = 'bt21.jpg'#input('input image path : ')
         if(image_path == 'exit'):
             break
         
@@ -118,7 +108,7 @@ if __name__ == "__main__":
         print('preprocess time spend ' + str(time.time() - s) + ' s')
 
         s = time.time()
-        score = Predict(classify_model, filter_model, score_model, origin_images, filter_images)
+        score = Predict(model, origin_images, filter_images)
         print('model predict time spend ' + str(time.time() - s) + ' s')
         # Decode
         score = np.reshape(score, (-1, len(has_filters)))

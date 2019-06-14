@@ -140,7 +140,7 @@ def build_classify_model(input_shape):
     x = Add()([x, x_shortcut])
     x = LeakyReLU(alpha=0.3)(x)
     x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
-    x = Dropout(0.4)(x)
+    #x = Dropout(0.4)(x)
 
     x_shortcut = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x_shortcut = BatchNormalization()(x_shortcut)
@@ -161,7 +161,7 @@ def build_classify_model(input_shape):
     x = Add()([x, x_shortcut])
     x = LeakyReLU(alpha=0.3)(x)
     x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
-    x = Dropout(0.4)(x)
+    #x = Dropout(0.4)(x)
 
     x = Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), padding = 'same')(x)
     x = BatchNormalization()(x)
@@ -173,7 +173,7 @@ def build_classify_model(input_shape):
     x = BatchNormalization()(x)
     x = LeakyReLU(alpha=0.3)(x)
     # x = MaxPool2D(pool_size = (3, 3), strides = (2, 2), padding = 'same')(x)
-    x = Dropout(0.4)(x)
+    #x = Dropout(0.4)(x)
 
     x = convolution_layer(output_filters, kernel_size = (1, 1))(x)
     x = GlobalAveragePooling2D()(x)
@@ -223,19 +223,25 @@ def Creat_train_Model(input_shape):
     model = Model([filter1_input, filter2_input, origin_input], [filters_pred, classify_pred])
     return classify_model, filter_model, score_model, model
 
-def Creat_test_Model(input_shape):
+
+def Creat_test_Model(input_shape, filters_num):
     # build the model
     classify_model = build_classify_model(input_shape)
     filter_model = build_filter_model(input_shape)
     score_model = build_score_model((output_filters * 2,))
 
     # define input
-    filter_input = Input(input_shape)
-    origin_input = Input(input_shape)
+    origin_input = Input(input_shape) # (1, 32, 32, 3) 
+    filter_inputs = []
+    for i in range(filters_num):
+        filter_input = Input(input_shape) # (1, 32, 32, 3) 
+        filter_inputs.append(filter_input)
 
+    filter_input = Concatenate(axis = 0)(filter_inputs) # (num, 32, 32, 3) 
     # get image feature
-    filter_feature = filter_model(filter_input)
-    classify_feature = classify_model(origin_input)
+    filter_feature = filter_model(filter_input) # (num, 64)
+    classify_feature = classify_model(origin_input) # (1, 64) 
+    classify_feature = Lambda(lambda x: tf.tile(x, [filters_num, 1]))(classify_feature) # (num, 64)
 
     # concat filter feature and classify feature
     filter_feature = Concatenate(axis = -1)([filter_feature, classify_feature])
@@ -243,9 +249,10 @@ def Creat_test_Model(input_shape):
     # classify
     filter_score = score_model(filter_feature)
 
-    model = Model(inputs = [filter_input, origin_input], outputs = filter_score)
+    inputs = filter_inputs
+    inputs.append(origin_input)
+    model = Model(inputs = inputs, outputs = filter_score)
     return classify_model, filter_model, score_model, model
-
 
 def loss_function(y_true, y_pred):
     return tf.nn.softmax_cross_entropy_with_logits_v2(labels = y_true, logits = y_pred)

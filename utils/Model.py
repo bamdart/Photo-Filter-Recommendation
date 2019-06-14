@@ -231,9 +231,13 @@ def Creat_test_Model(input_shape, filters_num):
     score_model = build_score_model((output_filters * 2,))
 
     # define input
-    filter_input = Input(input_shape) # (num, 32, 32, 3) 
     origin_input = Input(input_shape) # (1, 32, 32, 3) 
+    filter_inputs = []
+    for i in range(filters_num):
+        filter_input = Input(input_shape) # (1, 32, 32, 3) 
+        filter_inputs.append(filter_input)
 
+    filter_input = Concatenate(axis = 0)(filter_inputs) # (num, 32, 32, 3) 
     # get image feature
     filter_feature = filter_model(filter_input) # (num, 64)
     classify_feature = classify_model(origin_input) # (1, 64) 
@@ -245,7 +249,9 @@ def Creat_test_Model(input_shape, filters_num):
     # classify
     filter_score = score_model(filter_feature)
 
-    model = Model(inputs = [filter_input, origin_input], outputs = filter_score)
+    inputs = filter_inputs
+    inputs.append(origin_input)
+    model = Model(inputs = inputs, outputs = filter_score)
     return classify_model, filter_model, score_model, model
 
 def loss_function(y_true, y_pred):

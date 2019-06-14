@@ -9,6 +9,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 from filter import filter_process, preprocess_image
+from export_model import filters_num
 
 model_path = 'output_model\\final_model.pb'
 
@@ -70,14 +71,24 @@ def CreateModel(model_path, model_name):
     with graph.as_default():
         tf.import_graph_def(graph_def, name = model_name)
         sess = tf.Session(graph = graph)
-        input_tensor_filter = graph.get_tensor_by_name(model_name + '/input_4:0')
-        input_tensor_origin = graph.get_tensor_by_name(model_name + '/input_5:0')
+        input_tensors = []
+        for i in range(filters_num + 1):
+            node_name = '/input_{}:0'.format((i + 4))
+            input_tensor = graph.get_tensor_by_name(model_name + node_name)
+            input_tensors.append(input_tensor)
         pred_tensor = graph.get_tensor_by_name(model_name + '/Prediction_0:0')
-    return sess, [input_tensor_origin, input_tensor_filter], pred_tensor
+    return sess, input_tensors, pred_tensor
 
 def ModelPredict(model, origin_images, filter_images):
-    sess, input_tensor, pred_tensor = model
-    preds = sess.run(pred_tensor, feed_dict = {input_tensor[0] : origin_images, input_tensor[1] : filter_images})
+    sess, input_tensors, pred_tensor = model
+    filter_images = np.expand_dims(filter_images, axis = 1)
+
+    feed_dict = {}
+    feed_dict[input_tensors[0]] = origin_images
+    for i in range(filters_num):
+        feed_dict[input_tensors[i + 1]] = filter_images[i]
+
+    preds = sess.run(pred_tensor, feed_dict = feed_dict)
     return preds
 
 

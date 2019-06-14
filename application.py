@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
         s = time.time()
         origin_image = cv2.imread(image_path)
-        w = 128
+        w = 256
         h = int(origin_image.shape[0] * w / origin_image.shape[1])
         preprocess_filter_image = preprocess_image(img = origin_image, w = w, h = h)
         origin_image = cv2.resize(origin_image, (w, h))
